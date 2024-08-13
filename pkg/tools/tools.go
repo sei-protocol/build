@@ -233,6 +233,11 @@ func Ensure(ctx context.Context, toolName Name, platform Platform) error {
 	return tool.Ensure(ctx, platform)
 }
 
+// VersionDir returns path to the version directory.
+func VersionDir(ctx context.Context, platform Platform) string {
+	return filepath.Join(platformDir(ctx, platform), envVersion())
+}
+
 func get(name Name) (Tool, error) {
 	t, exists := toolsMap[name]
 	if !exists {
@@ -247,10 +252,6 @@ func envDir(ctx context.Context) string {
 
 func platformDir(ctx context.Context, platform Platform) string {
 	return filepath.Join(envDir(ctx), platform.String())
-}
-
-func versionDir(ctx context.Context, platform Platform) string {
-	return filepath.Join(platformDir(ctx, platform), envVersion())
 }
 
 func downloadsDir(ctx context.Context, platform Platform) string {
@@ -362,7 +363,7 @@ func shouldRelinkFile(ctx context.Context, platform Platform, tool Tool, dst str
 		return false, errors.WithStack(err)
 	}
 
-	versionedPath := filepath.Join(versionDir(ctx, platform), dst)
+	versionedPath := filepath.Join(VersionDir(ctx, platform), dst)
 	realVersionedPath, err := filepath.EvalSymlinks(versionedPath)
 	if err != nil {
 		return true, nil //nolint:nilerr // this is ok
@@ -382,7 +383,7 @@ func linkFiles(ctx context.Context, platform Platform, tool Tool, binaries []str
 			continue
 		}
 
-		dstVersion := filepath.Join(versionDir(ctx, platform), dst)
+		dstVersion := filepath.Join(VersionDir(ctx, platform), dst)
 		src, err := filepath.Rel(filepath.Dir(dstVersion), filepath.Join(toolLinksDir(ctx, platform, tool), dst))
 		if err != nil {
 			return errors.WithStack(err)
