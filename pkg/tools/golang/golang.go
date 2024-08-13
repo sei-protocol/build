@@ -23,6 +23,33 @@ import (
 
 const coverageReportDir = "coverage"
 
+// BuildConfig is the configuration for building binaries.
+type BuildConfig struct {
+	// Platform is the platform to build the binary for.
+	Platform tools.Platform
+
+	// PackagePath is the path to package to build relative to the ModulePath.
+	PackagePath string
+
+	// BinOutputPath is the path for compiled binary file.
+	BinOutputPath string
+
+	// CGOEnabled builds cgo binary.
+	CGOEnabled bool
+
+	// Tags is go build tags.
+	Tags []string
+}
+
+// Build builds go binary.
+func Build(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
+	if config.Platform.OS == tools.OSDocker {
+		return errors.New("building in docker hasn't been implemented yet")
+		// return buildInDocker(ctx, config)
+	}
+	return buildLocally(ctx, deps, config)
+}
+
 // Lint lints.
 func Lint(ctx context.Context, deps build.DepsFunc) error {
 	deps(Tidy, LintCode, git.StatusClean)
@@ -145,6 +172,62 @@ func UnitTests(ctx context.Context, deps build.DepsFunc) error {
 		}
 		return nil
 	})
+}
+
+func buildLocally(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
+	deps(EnsureGo)
+
+	if config.Platform != tools.PlatformLocal {
+		return errors.Errorf("building requested for platform %s while only %s is supported",
+			config.Platform, tools.PlatformLocal)
+	}
+
+	args, envs := buildArgsAndEnvs(config, filepath.Join(tools.VersionDir(ctx, config.Platform), "lib"))
+	args = append(args, "-o", lo.Must(filepath.Abs(config.BinOutputPath)), ".")
+
+	cmd := exec.Command(tools.Bin(ctx, "bin/go", config.Platform), args...)
+	cmd.Dir = config.PackagePath
+	cmd.Env = append(os.Environ(), envs...)
+
+	logger.Get(ctx).Info(
+		"Building go package locally",
+		zap.String("package", config.PackagePath),
+		zap.String("output", config.BinOutputPath),
+		zap.String("command", cmd.String()),
+	)
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return errors.Wrapf(err, "building go package '%s' failed", config.PackagePath)
+	}
+	return nil
+}
+
+func buildArgsAndEnvs(config BuildConfig, libDir string) (args, envs []string) {
+	ldFlags := []string{"-w", "-s"}
+
+	args = []string{
+		"build",
+		"-trimpath",
+		"-buildvcs=false",
+	}
+	if len(ldFlags) != 0 {
+		args = append(args, "-ldflags="+strings.Join(ldFlags, " "))
+	}
+	if len(config.Tags) != 0 {
+		args = append(args, "-tags="+strings.Join(config.Tags, ","))
+	}
+
+	cgoEnabled := "0"
+	if config.CGOEnabled {
+		cgoEnabled = "1"
+	}
+	envs = []string{
+		"LIBRARY_PATH=" + libDir,
+		"CGO_ENABLED=" + cgoEnabled,
+		"GOOS=" + config.Platform.OS,
+		"GOARCH=" + config.Platform.Arch,
+	}
+
+	return args, envs
 }
 
 func onModule(fn func(path string) error) error {
