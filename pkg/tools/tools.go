@@ -56,6 +56,7 @@ var (
 	PlatformDockerARM64 = Platform{OS: osDocker, Arch: archARM64}
 )
 
+// Tool represents a tool to be installed.
 type Tool interface {
 	GetName() Name
 	GetVersion() string
@@ -89,19 +90,23 @@ type BinaryTool struct {
 	Sources Sources
 }
 
+// GetName returns the anme of the tool.
 func (bt BinaryTool) GetName() Name {
 	return bt.Name
 }
 
+// GetVersion returns the version of the tool.
 func (bt BinaryTool) GetVersion() string {
 	return bt.Version
 }
 
+// IsCompatible checks if tool is compatible with the platform.
 func (bt BinaryTool) IsCompatible(platform Platform) bool {
 	_, exists := bt.Sources[platform]
 	return exists
 }
 
+// Ensure ensures the tool is installed.
 func (bt BinaryTool) Ensure(ctx context.Context, platform Platform) error {
 	source, exists := bt.Sources[platform]
 	if !exists {
@@ -194,7 +199,8 @@ func (bt BinaryTool) install(ctx context.Context, platform Platform) (retErr err
 		if err := os.Chmod(srcPath, 0o700); err != nil {
 			return errors.WithStack(err)
 		}
-		srcLinkPath, err := filepath.Rel(filepath.Dir(dstPathChecksum), filepath.Join(toolDownloadDir(ctx, platform, bt), src))
+		srcLinkPath, err := filepath.Rel(filepath.Dir(dstPathChecksum),
+			filepath.Join(toolDownloadDir(ctx, platform, bt), src))
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -236,6 +242,12 @@ func Ensure(ctx context.Context, toolName Name, platform Platform) error {
 // VersionDir returns path to the version directory.
 func VersionDir(ctx context.Context, platform Platform) string {
 	return filepath.Join(platformDir(ctx, platform), envVersion())
+}
+
+// Bin returns path to the installed binary.
+func Bin(ctx context.Context, binary string, platform Platform) string {
+	return must.String(filepath.Abs(must.String(filepath.EvalSymlinks(
+		filepath.Join(VersionDir(ctx, platform), binary)))))
 }
 
 func get(name Name) (Tool, error) {

@@ -10,7 +10,8 @@ import (
 
 // Tool names.
 const (
-	Go tools.Name = "go"
+	Go       tools.Name = "go"
+	GolangCI tools.Name = "golangci"
 )
 
 var t = []tools.Tool{
@@ -44,6 +45,34 @@ var t = []tools.Tool{
 			},
 		},
 	},
+	// https://github.com/golangci/golangci-lint/releases/
+	tools.BinaryTool{
+		Name:    GolangCI,
+		Version: "1.55.2",
+		Sources: tools.Sources{
+			tools.PlatformLinuxAMD64: {
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-linux-amd64.tar.gz",
+				Hash: "sha256:ca21c961a33be3bc15e4292dc40c98c8dcc5463a7b6768a3afc123761630c09c",
+				Links: map[string]string{
+					"bin/golangci-lint": "golangci-lint-1.55.2-linux-amd64/golangci-lint",
+				},
+			},
+			tools.PlatformDarwinAMD64: {
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-darwin-amd64.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:632e96e6d5294fbbe7b2c410a49c8fa01c60712a0af85a567de85bcc1623ea21",
+				Links: map[string]string{
+					"bin/golangci-lint": "golangci-lint-1.55.2-darwin-amd64/golangci-lint",
+				},
+			},
+			tools.PlatformDarwinARM64: {
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-darwin-arm64.tar.gz", //nolint:lll // breaking down urls is not beneficial
+				Hash: "sha256:234463f059249f82045824afdcdd5db5682d0593052f58f6a3039a0a1c3899f6",
+				Links: map[string]string{
+					"bin/golangci-lint": "golangci-lint-1.55.2-darwin-arm64/golangci-lint",
+				},
+			},
+		},
+	},
 }
 
 // EnsureGo ensures that go is available.
@@ -51,6 +80,7 @@ func EnsureGo(ctx context.Context, deps build.DepsFunc) error {
 	return tools.Ensure(ctx, Go, tools.PlatformLocal)
 }
 
-func init() {
-	tools.Add(t...)
+// EnsureGolangCI ensures that go linter is available.
+func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
+	return tools.Ensure(ctx, GolangCI, tools.PlatformLocal)
 }
