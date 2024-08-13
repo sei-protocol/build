@@ -52,6 +52,7 @@ var (
 	PlatformLinuxAMD64  = Platform{OS: OSLinux, Arch: ArchAMD64}
 	PlatformDarwinAMD64 = Platform{OS: OSDarwin, Arch: ArchAMD64}
 	PlatformDarwinARM64 = Platform{OS: OSDarwin, Arch: ArchARM64}
+	PlatformDocker      = Platform{OS: OSDocker, Arch: runtime.GOARCH}
 	PlatformDockerAMD64 = Platform{OS: OSDocker, Arch: ArchAMD64}
 	PlatformDockerARM64 = Platform{OS: OSDocker, Arch: ArchARM64}
 )
