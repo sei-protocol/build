@@ -10,6 +10,7 @@ jobs:
       matrix:
         command: [
           "lint",
+          "test",
         ]
 
     runs-on: ubuntu-latest

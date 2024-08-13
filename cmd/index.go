@@ -34,6 +34,14 @@ var commands = map[string]build.Command{
 		Description: "Lints code",
 		Fn:          golang.Lint,
 	},
+	"test": {
+		Description: "Runs unit tests",
+		Fn:          golang.UnitTests,
+	},
+	"tidy": {
+		Description: "Tidies up the code",
+		Fn:          golang.Tidy,
+	},
 }
 
 func enter(ctx context.Context, deps build.DepsFunc) error {

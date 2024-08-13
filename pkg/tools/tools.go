@@ -19,7 +19,6 @@ import (
 	"github.com/outofforest/build"
 	"github.com/outofforest/logger"
 	"github.com/pkg/errors"
-	"github.com/ridge/must"
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
@@ -144,7 +143,7 @@ func (bt BinaryTool) install(ctx context.Context, platform Platform) (retErr err
 	log := logger.Get(ctx)
 	log.Info("Installing binaries")
 
-	resp, err := http.DefaultClient.Do(must.HTTPRequest(http.NewRequestWithContext(ctx, http.MethodGet, source.URL, nil)))
+	resp, err := http.DefaultClient.Do(lo.Must(http.NewRequestWithContext(ctx, http.MethodGet, source.URL, nil)))
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -246,7 +245,7 @@ func VersionDir(ctx context.Context, platform Platform) string {
 
 // Bin returns path to the installed binary.
 func Bin(ctx context.Context, binary string, platform Platform) string {
-	return must.String(filepath.Abs(must.String(filepath.EvalSymlinks(
+	return lo.Must(filepath.Abs(lo.Must(filepath.EvalSymlinks(
 		filepath.Join(VersionDir(ctx, platform), binary)))))
 }
 
