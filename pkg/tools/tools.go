@@ -36,23 +36,24 @@ func (p Platform) String() string {
 	return p.OS + "." + p.Arch
 }
 
+// Platform constants.
 const (
-	osLinux  = "linux"
-	osDarwin = "darwin"
-	osDocker = "docker"
+	OSLinux  = "linux"
+	OSDarwin = "darwin"
+	OSDocker = "docker"
 
-	archAMD64 = "amd64"
-	archARM64 = "arm64"
+	ArchAMD64 = "amd64"
+	ArchARM64 = "arm64"
 )
 
 // Platform definitions.
 var (
 	PlatformLocal       = Platform{OS: runtime.GOOS, Arch: runtime.GOARCH}
-	PlatformLinuxAMD64  = Platform{OS: osLinux, Arch: archAMD64}
-	PlatformDarwinAMD64 = Platform{OS: osDarwin, Arch: archAMD64}
-	PlatformDarwinARM64 = Platform{OS: osDarwin, Arch: archARM64}
-	PlatformDockerAMD64 = Platform{OS: osDocker, Arch: archAMD64}
-	PlatformDockerARM64 = Platform{OS: osDocker, Arch: archARM64}
+	PlatformLinuxAMD64  = Platform{OS: OSLinux, Arch: ArchAMD64}
+	PlatformDarwinAMD64 = Platform{OS: OSDarwin, Arch: ArchAMD64}
+	PlatformDarwinARM64 = Platform{OS: OSDarwin, Arch: ArchARM64}
+	PlatformDockerAMD64 = Platform{OS: OSDocker, Arch: ArchAMD64}
+	PlatformDockerARM64 = Platform{OS: OSDocker, Arch: ArchARM64}
 )
 
 // Tool represents a tool to be installed.

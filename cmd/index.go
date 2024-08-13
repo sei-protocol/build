@@ -9,6 +9,7 @@ import (
 
 	"github.com/outofforest/build"
 	"github.com/outofforest/libexec"
+	"github.com/samber/lo"
 
 	"github.com/sei-protocol/build/pkg/tools"
 	"github.com/sei-protocol/build/pkg/tools/golang"
@@ -22,8 +23,11 @@ var commands = map[string]build.Command{
 	"build/me": {
 		Description: "Rebuilds the builder",
 		Fn: func(ctx context.Context, deps build.DepsFunc) error {
-			// TODO (wojciech): Implement
-			return nil
+			return golang.Build(ctx, deps, golang.BuildConfig{
+				Platform:      tools.PlatformLocal,
+				PackagePath:   "cmd",
+				BinOutputPath: filepath.Join("bin", ".cache", filepath.Base(lo.Must(os.Executable()))),
+			})
 		},
 	},
 	"setup": {
