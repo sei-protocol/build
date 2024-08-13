@@ -2,19 +2,25 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/outofforest/build"
+
+	"github.com/sei-protocol/build/pkg/tools"
+	_ "github.com/sei-protocol/build/pkg/tools/golang"
 )
 
 func main() {
 	build.Main("sei", map[string]build.Command{
-		"hello": {
-			Description: "Hello world",
+		"build/me": {
+			Description: "Rebuilds the builder",
 			Fn: func(ctx context.Context, deps build.DepsFunc) error {
-				fmt.Println("Hello world")
+				// TODO (wojciech): Implement
 				return nil
 			},
+		},
+		"setup": {
+			Description: "Installs all the tools for the host operating system",
+			Fn:          tools.EnsureAll,
 		},
 	})
 }
