@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package seiprotocol.seistream.node;
+
+option go_package = "./node";
+
+// TransactionHeader message definition
+message TransactionHeader {
+  map<string, string> properties = 1;
+  string edge_node = 2;
+  Signature signature = 3;
+}
+
+// Signature message definition
+message Signature {
+  string algorithm = 1;
+  string signature = 2;
+}
+
+// Transaction message definition
+message Transaction {
+  string hash = 1;
+  bytes payload = 2;
+  int64 gasUsed = 3;
+  TransactionHeader header = 4;
+}
+
+// TransactionResponse message definition
+message TransactionResponse {
+  string hash = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+// Block header message
+message BlockHeader {
+  int64 block_number = 1;
+  int64 timestamp = 2;
+  int64 total_gas = 3;
+  string stream_node = 4;
+  int64 edge_count = 5;
+}
+
+// Block message that can include headers or bodies
+message Block {
+  BlockHeader header = 1;
+  repeated string hashes = 2;
+  repeated bytes payloads = 3;
+}
+
+// Request message for GetBlocks
+message SubscribeBlocksRequest {
+  int64 start_block = 1; // If 0, start from the latest block
+  bool include_payloads = 2;
+  bool latest = 3; // start from latest (ignore start_block)
+}
+
+// Response message for GetBlocks
+message GetBlocksResponse {
+  repeated Block blocks = 1;
+}
+
+// Transactions service definition
+service Transactions {
+  // Add a bidirectional stream of transactions, only errors are returned
+  rpc SendTransactions(stream Transaction) returns (stream TransactionResponse);
+}
+
+// Blocks service definition
+service Blocks {
+  // Get blocks since a specific block number with server-side streaming
+  rpc SubscribeBlocks(SubscribeBlocksRequest) returns (stream Block);
+}
