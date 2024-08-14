@@ -2,8 +2,15 @@ package golang
 
 import (
 	"context"
+	"os"
+	"os/exec"
+	"path/filepath"
 
 	"github.com/outofforest/build"
+	"github.com/outofforest/libexec"
+	"github.com/outofforest/logger"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/sei-protocol/build/pkg/tools"
 )
@@ -15,6 +22,7 @@ const (
 )
 
 var t = []tools.Tool{
+	// https://go.dev/dl/
 	tools.BinaryTool{
 		Name:    Go,
 		Version: "1.22.4",
@@ -45,6 +53,7 @@ var t = []tools.Tool{
 			},
 		},
 	},
+
 	// https://github.com/golangci/golangci-lint/releases/
 	tools.BinaryTool{
 		Name:    GolangCI,
@@ -73,6 +82,95 @@ var t = []tools.Tool{
 			},
 		},
 	},
+}
+
+// GoPackageTool is the tool installed using go install command.
+type GoPackageTool struct {
+	Name    tools.Name
+	Version string
+	Package string
+}
+
+// GetName returns the name of the tool.
+func (gpt GoPackageTool) GetName() tools.Name {
+	return gpt.Name
+}
+
+// GetVersion returns the version of the tool.
+func (gpt GoPackageTool) GetVersion() string {
+	return gpt.Version
+}
+
+// IsCompatible tells if tool is defined for the platform.
+func (gpt GoPackageTool) IsCompatible(platform tools.Platform) (bool, error) {
+	golang, err := tools.Get(Go)
+	if err != nil {
+		return false, err
+	}
+	return golang.IsCompatible(platform)
+}
+
+// Ensure ensures that tool is installed.
+func (gpt GoPackageTool) Ensure(ctx context.Context, platform tools.Platform) error {
+	binName := filepath.Base(gpt.Package)
+	downloadDir := tools.ToolDownloadDir(ctx, platform, gpt)
+	dst := filepath.Join("bin", binName)
+
+	//nolint:nestif // complexity comes from trivial error-handling ifs.
+	if tools.ShouldReinstall(ctx, platform, gpt, dst, binName) {
+		if err := tools.Ensure(ctx, Go, platform); err != nil {
+			return errors.Wrapf(err, "ensuring go failed")
+		}
+
+		cmd := exec.Command(tools.Bin(ctx, "bin/go", platform), "install", gpt.Package+"@"+gpt.Version)
+		cmd.Env = append(env(ctx), "GOBIN="+downloadDir)
+
+		if err := libexec.Exec(ctx, cmd); err != nil {
+			return err
+		}
+
+		srcPath := filepath.Join(downloadDir, binName)
+
+		binChecksum, err := tools.Checksum(srcPath)
+		if err != nil {
+			return err
+		}
+
+		linksDir := tools.ToolLinksDir(ctx, platform, gpt)
+		dstPath := filepath.Join(linksDir, dst)
+		dstPathChecksum := dstPath + ":" + binChecksum
+
+		if err := os.Remove(dstPath); err != nil && !os.IsNotExist(err) {
+			panic(err)
+		}
+		if err := os.Remove(dstPathChecksum); err != nil && !os.IsNotExist(err) {
+			return errors.WithStack(err)
+		}
+
+		if err := os.MkdirAll(filepath.Dir(dstPath), 0o700); err != nil {
+			return errors.WithStack(err)
+		}
+		if err := os.Chmod(srcPath, 0o700); err != nil {
+			return errors.WithStack(err)
+		}
+		srcLinkPath, err := filepath.Rel(filepath.Dir(dstPathChecksum), filepath.Join(downloadDir, binName))
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		if err := os.Symlink(srcLinkPath, dstPathChecksum); err != nil {
+			return errors.WithStack(err)
+		}
+		if err := os.Symlink(filepath.Base(dstPathChecksum), dstPath); err != nil {
+			return errors.WithStack(err)
+		}
+		if _, err := filepath.EvalSymlinks(dstPath); err != nil {
+			return errors.WithStack(err)
+		}
+
+		logger.Get(ctx).Info("Binary installed to path", zap.String("path", dstPath))
+	}
+
+	return tools.LinkFiles(ctx, platform, gpt, []string{dst})
 }
 
 // EnsureGo ensures that go is available.
