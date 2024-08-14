@@ -11,7 +11,7 @@ BUILDER="$REPO/bin/.cache/builder-$VERSION"
 
 if [ ! -f "$BUILDER" ]; then
   rm -f ./bin/.cache/builder-*
-  go build -trimpath -o "$BUILDER" ./cmd
+  go build -trimpath -o "$BUILDER" ./cmd/builder
   "$BUILDER" build/me
 fi
 

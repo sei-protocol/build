@@ -11,8 +11,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// StatusClean checks that there are no uncommitted files in the repo.
-func StatusClean(ctx context.Context, _ build.DepsFunc) error {
+// IsStatusClean checks that there are no uncommitted files in the repo.
+func IsStatusClean(ctx context.Context, _ build.DepsFunc) error {
 	buf := &bytes.Buffer{}
 	cmd := exec.Command("git", "status", "-s")
 	cmd.Stdout = buf

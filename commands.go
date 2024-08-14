@@ -1,4 +1,4 @@
-package main
+package build
 
 import (
 	"context"
@@ -15,7 +15,8 @@ import (
 	"github.com/sei-protocol/build/pkg/tools/golang"
 )
 
-var commands = map[string]build.Command{
+// Commands is the list of standard commands useful for every environment.
+var Commands = map[string]build.Command{
 	"enter": {
 		Description: "Enters the environment",
 		Fn:          enter,
@@ -25,7 +26,7 @@ var commands = map[string]build.Command{
 		Fn: func(ctx context.Context, deps build.DepsFunc) error {
 			return golang.Build(ctx, deps, golang.BuildConfig{
 				Platform:      tools.PlatformLocal,
-				PackagePath:   "cmd",
+				PackagePath:   "cmd/builder",
 				BinOutputPath: filepath.Join("bin", ".cache", filepath.Base(lo.Must(os.Executable()))),
 			})
 		},
@@ -33,18 +34,6 @@ var commands = map[string]build.Command{
 	"setup": {
 		Description: "Installs all the tools for the host operating system",
 		Fn:          tools.EnsureAll,
-	},
-	"lint": {
-		Description: "Lints code",
-		Fn:          golang.Lint,
-	},
-	"test": {
-		Description: "Runs unit tests",
-		Fn:          golang.UnitTests,
-	},
-	"tidy": {
-		Description: "Tidies up the code",
-		Fn:          golang.Tidy,
 	},
 }
 
