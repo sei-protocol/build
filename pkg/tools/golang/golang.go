@@ -3,7 +3,6 @@ package golang
 import (
 	"context"
 	_ "embed"
-	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -55,8 +54,6 @@ func Lint(ctx context.Context, deps build.DepsFunc) error {
 	log := logger.Get(ctx)
 	config := lintConfigPath(ctx)
 
-	fmt.Println(config)
-
 	return onModule(func(path string) error {
 		goCodePresent, err := containsGoCode(path)
 		if err != nil {
@@ -69,6 +66,7 @@ func Lint(ctx context.Context, deps build.DepsFunc) error {
 
 		log.Info("Running linter", zap.String("path", path))
 		cmd := exec.Command(tools.Bin(ctx, "bin/golangci-lint", tools.PlatformLocal), "run", "--config", config)
+		cmd.Env = env(ctx)
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "linter errors found in module '%s'", path)
@@ -85,6 +83,7 @@ func Tidy(ctx context.Context, deps build.DepsFunc) error {
 		log.Info("Running go mod tidy", zap.String("path", path))
 
 		cmd := exec.Command(tools.Bin(ctx, "bin/go", tools.PlatformLocal), "mod", "tidy")
+		cmd.Env = env(ctx)
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "'go mod tidy' failed in module '%s'", path)
@@ -139,6 +138,7 @@ func UnitTests(ctx context.Context, deps build.DepsFunc) error {
 			"-coverprofile", coverageProfile,
 			"./...",
 		)
+		cmd.Env = env(ctx)
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "unit tests failed in module '%s'", path)
@@ -155,7 +155,7 @@ func buildLocally(ctx context.Context, deps build.DepsFunc, config BuildConfig) 
 			config.Platform, tools.PlatformLocal)
 	}
 
-	args, envs := buildArgsAndEnvs(config, filepath.Join(tools.VersionDir(ctx, config.Platform), "lib"))
+	args, envs := buildArgsAndEnvs(ctx, config, filepath.Join(tools.VersionDir(ctx, config.Platform), "lib"))
 	args = append(args, "-o", lo.Must(filepath.Abs(config.BinOutputPath)), ".")
 
 	cmd := exec.Command(tools.Bin(ctx, "bin/go", config.Platform), args...)
@@ -174,7 +174,7 @@ func buildLocally(ctx context.Context, deps build.DepsFunc, config BuildConfig) 
 	return nil
 }
 
-func buildArgsAndEnvs(config BuildConfig, libDir string) (args, envs []string) {
+func buildArgsAndEnvs(ctx context.Context, config BuildConfig, libDir string) (args, envs []string) {
 	ldFlags := []string{"-w", "-s"}
 
 	args = []string{
@@ -193,12 +193,12 @@ func buildArgsAndEnvs(config BuildConfig, libDir string) (args, envs []string) {
 	if config.CGOEnabled {
 		cgoEnabled = "1"
 	}
-	envs = []string{
-		"LIBRARY_PATH=" + libDir,
-		"CGO_ENABLED=" + cgoEnabled,
-		"GOOS=" + config.Platform.OS,
-		"GOARCH=" + config.Platform.Arch,
-	}
+	envs = append(env(ctx),
+		"LIBRARY_PATH="+libDir,
+		"CGO_ENABLED="+cgoEnabled,
+		"GOOS="+config.Platform.OS,
+		"GOARCH="+config.Platform.Arch,
+	)
 
 	return args, envs
 }
@@ -241,4 +241,13 @@ func storeLintConfig(ctx context.Context, _ build.DepsFunc) error {
 
 func lintConfigPath(ctx context.Context) string {
 	return filepath.Join(tools.VersionDir(ctx, tools.PlatformLocal), "golangci.yaml")
+}
+
+func env(ctx context.Context) []string {
+	return []string{
+		"PATH=" + os.Getenv("PATH"),
+		"GOPATH=" + filepath.Join(tools.DevDir(ctx), "go"),
+		"GOCACHE=" + filepath.Join(tools.DevDir(ctx), "go", "cache", "gobuild"),
+		"GOLANGCI_LINT_CACHE=" + filepath.Join(tools.DevDir(ctx), "go", "cache", "golangci"),
+	}
 }

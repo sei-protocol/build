@@ -6,7 +6,6 @@ import (
 	me "github.com/sei-protocol/build"
 	"github.com/sei-protocol/build/pkg/tools/git"
 	"github.com/sei-protocol/build/pkg/tools/golang"
-	_ "github.com/sei-protocol/build/pkg/tools/rust"
 )
 
 func main() {

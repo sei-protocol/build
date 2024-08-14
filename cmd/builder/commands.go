@@ -9,6 +9,21 @@ import (
 )
 
 var commands = map[string]build.Command{
+	"build": {
+		Description: "Builds all binaries",
+		Fn: func(_ context.Context, deps build.DepsFunc) error {
+			deps(buildGo, buildRust)
+			return nil
+		},
+	},
+	"build/go": {
+		Description: "Builds test go app",
+		Fn:          buildGo,
+	},
+	"build/rust": {
+		Description: "Builds test rust app",
+		Fn:          buildRust,
+	},
 	"lint": {
 		Description: "Lints code",
 		Fn: func(_ context.Context, deps build.DepsFunc) error {
