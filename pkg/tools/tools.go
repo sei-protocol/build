@@ -61,7 +61,7 @@ var (
 type Tool interface {
 	GetName() Name
 	GetVersion() string
-	IsCompatible(platform Platform) bool
+	IsCompatible(platform Platform) (bool, error)
 	Ensure(ctx context.Context, platform Platform) error
 }
 
@@ -102,9 +102,9 @@ func (bt BinaryTool) GetVersion() string {
 }
 
 // IsCompatible checks if tool is compatible with the platform.
-func (bt BinaryTool) IsCompatible(platform Platform) bool {
+func (bt BinaryTool) IsCompatible(platform Platform) (bool, error) {
 	_, exists := bt.Sources[platform]
-	return exists
+	return exists, nil
 }
 
 // Ensure ensures the tool is installed.
@@ -116,7 +116,7 @@ func (bt BinaryTool) Ensure(ctx context.Context, platform Platform) error {
 
 	var install bool
 	for dst, src := range source.Links {
-		if shouldReinstall(ctx, platform, bt, dst, src) {
+		if ShouldReinstall(ctx, platform, bt, dst, src) {
 			install = true
 			break
 		}
@@ -128,7 +128,7 @@ func (bt BinaryTool) Ensure(ctx context.Context, platform Platform) error {
 		}
 	}
 
-	return linkFiles(ctx, platform, bt, lo.Keys(lo.Assign(source.Links)))
+	return LinkFiles(ctx, platform, bt, lo.Keys(lo.Assign(source.Links)))
 }
 
 func (bt BinaryTool) install(ctx context.Context, platform Platform) (retErr error) {
@@ -153,7 +153,7 @@ func (bt BinaryTool) install(ctx context.Context, platform Platform) (retErr err
 
 	hasher, expectedChecksum := hasher(source.Hash)
 	reader := io.TeeReader(resp.Body, hasher)
-	downloadDir := toolDownloadDir(ctx, platform, bt)
+	downloadDir := ToolDownloadDir(ctx, platform, bt)
 	if err := os.RemoveAll(downloadDir); err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -176,11 +176,11 @@ func (bt BinaryTool) install(ctx context.Context, platform Platform) (retErr err
 			expectedChecksum, actualChecksum, source.URL)
 	}
 
-	linksDir := toolLinksDir(ctx, platform, bt)
+	linksDir := ToolLinksDir(ctx, platform, bt)
 	for dst, src := range source.Links {
 		srcPath := filepath.Join(downloadDir, src)
 
-		binChecksum, err := checksum(srcPath)
+		binChecksum, err := Checksum(srcPath)
 		if err != nil {
 			return err
 		}
@@ -197,11 +197,11 @@ func (bt BinaryTool) install(ctx context.Context, platform Platform) (retErr err
 		if err := os.MkdirAll(filepath.Dir(dstPath), 0o700); err != nil {
 			return errors.WithStack(err)
 		}
+
 		if err := os.Chmod(srcPath, 0o700); err != nil {
 			return errors.WithStack(err)
 		}
-		srcLinkPath, err := filepath.Rel(filepath.Dir(dstPathChecksum),
-			filepath.Join(toolDownloadDir(ctx, platform, bt), src))
+		srcLinkPath, err := filepath.Rel(filepath.Dir(dstPathChecksum), filepath.Join(downloadDir, src))
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -211,6 +211,7 @@ func (bt BinaryTool) install(ctx context.Context, platform Platform) (retErr err
 		if err := os.Symlink(filepath.Base(dstPathChecksum), dstPath); err != nil {
 			return errors.WithStack(err)
 		}
+
 		log.Info("Binary installed to path", zap.String("path", dstPath))
 	}
 
@@ -219,9 +220,13 @@ func (bt BinaryTool) install(ctx context.Context, platform Platform) (retErr err
 }
 
 // EnsureAll ensures all the tools.
-func EnsureAll(ctx context.Context, deps build.DepsFunc) error {
+func EnsureAll(ctx context.Context, _ build.DepsFunc) error {
 	for _, tool := range toolsMap {
-		if !tool.IsCompatible(PlatformLocal) {
+		isCompatible, err := tool.IsCompatible(PlatformLocal)
+		if err != nil {
+			return err
+		}
+		if !isCompatible {
 			continue
 		}
 		if err := tool.Ensure(ctx, PlatformLocal); err != nil {
@@ -233,7 +238,7 @@ func EnsureAll(ctx context.Context, deps build.DepsFunc) error {
 
 // Ensure ensures tool exists for the platform.
 func Ensure(ctx context.Context, toolName Name, platform Platform) error {
-	tool, err := get(toolName)
+	tool, err := Get(toolName)
 	if err != nil {
 		return err
 	}
@@ -251,72 +256,28 @@ func Bin(ctx context.Context, binary string, platform Platform) string {
 		filepath.Join(VersionDir(ctx, platform), binary)))))
 }
 
-func get(name Name) (Tool, error) {
-	t, exists := toolsMap[name]
+// Get returns the tool.
+func Get(toolName Name) (Tool, error) {
+	t, exists := toolsMap[toolName]
 	if !exists {
-		return nil, errors.Errorf("tool %s does not exist", name)
+		return nil, errors.Errorf("tool %s does not exist", toolName)
 	}
 	return t, nil
 }
 
-func envDir(ctx context.Context) string {
-	return filepath.Join(lo.Must(os.UserCacheDir()), build.GetName(ctx))
-}
-
-func platformDir(ctx context.Context, platform Platform) string {
-	return filepath.Join(envDir(ctx), platform.String())
-}
-
-func downloadsDir(ctx context.Context, platform Platform) string {
-	return filepath.Join(platformDir(ctx, platform), "downloads")
-}
-
-func toolDownloadDir(ctx context.Context, platform Platform, tool Tool) string {
+// ToolDownloadDir returns directory where tool is downloaded.
+func ToolDownloadDir(ctx context.Context, platform Platform, tool Tool) string {
 	return filepath.Join(downloadsDir(ctx, platform), string(tool.GetName())+"-"+tool.GetVersion())
 }
 
-func toolLinksDir(ctx context.Context, platform Platform, tool Tool) string {
-	return filepath.Join(toolDownloadDir(ctx, platform, tool), "_links")
+// ToolLinksDir returns directory where tools should be linked.
+func ToolLinksDir(ctx context.Context, platform Platform, tool Tool) string {
+	return filepath.Join(ToolDownloadDir(ctx, platform, tool), "_links")
 }
 
-func envVersion() string {
-	module := module()
-
-	bi, ok := debug.ReadBuildInfo()
-	if !ok {
-		panic("reading build info failed")
-	}
-
-	for _, m := range append([]*debug.Module{&bi.Main}, bi.Deps...) {
-		if m.Path != module {
-			continue
-		}
-		if m.Replace != nil {
-			m = m.Replace
-		}
-
-		if m.Version == "(devel)" {
-			return "devel"
-		}
-
-		return m.Version
-	}
-
-	panic("impossible condition: build module not found")
-}
-
-func module() string {
-	_, file, _, _ := runtime.Caller(0)
-	module := strings.Join(strings.Split(file, "/")[:3], "/")
-	index := strings.Index(module, "@")
-	if index > 0 {
-		module = module[:index]
-	}
-	return module
-}
-
-func shouldReinstall(ctx context.Context, platform Platform, tool Tool, dst, src string) bool {
-	srcAbsPath, err := filepath.Abs(filepath.Join(toolDownloadDir(ctx, platform, tool), src))
+// ShouldReinstall check if tool should be reinstalled due to missing files or links.
+func ShouldReinstall(ctx context.Context, platform Platform, tool Tool, dst, src string) bool {
+	srcAbsPath, err := filepath.Abs(filepath.Join(ToolDownloadDir(ctx, platform, tool), src))
 	if err != nil {
 		return true
 	}
@@ -326,7 +287,7 @@ func shouldReinstall(ctx context.Context, platform Platform, tool Tool, dst, src
 		return true
 	}
 
-	dstAbsPath, err := filepath.Abs(filepath.Join(toolLinksDir(ctx, platform, tool), dst))
+	dstAbsPath, err := filepath.Abs(filepath.Join(ToolLinksDir(ctx, platform, tool), dst))
 	if err != nil {
 		return true
 	}
@@ -368,24 +329,8 @@ func shouldReinstall(ctx context.Context, platform Platform, tool Tool, dst, src
 	return actualChecksum != expectedChecksum
 }
 
-func shouldRelinkFile(ctx context.Context, platform Platform, tool Tool, dst string) (bool, error) {
-	srcPath := filepath.Join(toolLinksDir(ctx, platform, tool), dst)
-
-	realSrcPath, err := filepath.EvalSymlinks(srcPath)
-	if err != nil {
-		return false, errors.WithStack(err)
-	}
-
-	versionedPath := filepath.Join(VersionDir(ctx, platform), dst)
-	realVersionedPath, err := filepath.EvalSymlinks(versionedPath)
-	if err != nil {
-		return true, nil //nolint:nilerr // this is ok
-	}
-
-	return realSrcPath != realVersionedPath, nil
-}
-
-func linkFiles(ctx context.Context, platform Platform, tool Tool, binaries []string) error {
+// LinkFiles creates all the links for the tool.
+func LinkFiles(ctx context.Context, platform Platform, tool Tool, binaries []string) error {
 	for _, dst := range binaries {
 		relink, err := shouldRelinkFile(ctx, platform, tool, dst)
 		if err != nil {
@@ -397,7 +342,7 @@ func linkFiles(ctx context.Context, platform Platform, tool Tool, binaries []str
 		}
 
 		dstVersion := filepath.Join(VersionDir(ctx, platform), dst)
-		src, err := filepath.Rel(filepath.Dir(dstVersion), filepath.Join(toolLinksDir(ctx, platform, tool), dst))
+		src, err := filepath.Rel(filepath.Dir(dstVersion), filepath.Join(ToolLinksDir(ctx, platform, tool), dst))
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -416,6 +361,87 @@ func linkFiles(ctx context.Context, platform Platform, tool Tool, binaries []str
 	}
 
 	return nil
+}
+
+// Checksum computes the checksum of a file.
+func Checksum(file string) (string, error) {
+	f, err := os.OpenFile(file, os.O_RDONLY, 0o600)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	defer f.Close()
+
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, f); err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	return "sha256:" + hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+func envDir(ctx context.Context) string {
+	return filepath.Join(lo.Must(os.UserCacheDir()), build.GetName(ctx))
+}
+
+func platformDir(ctx context.Context, platform Platform) string {
+	return filepath.Join(envDir(ctx), platform.String())
+}
+
+func downloadsDir(ctx context.Context, platform Platform) string {
+	return filepath.Join(platformDir(ctx, platform), "downloads")
+}
+
+func envVersion() string {
+	module := module()
+
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		panic("reading build info failed")
+	}
+
+	for _, m := range append([]*debug.Module{&bi.Main}, bi.Deps...) {
+		if m.Path != module {
+			continue
+		}
+		if m.Replace != nil {
+			m = m.Replace
+		}
+
+		if m.Version == "(devel)" {
+			return "devel"
+		}
+
+		return m.Version
+	}
+
+	panic("impossible condition: build module not found")
+}
+
+func module() string {
+	_, file, _, _ := runtime.Caller(0)
+	module := strings.Join(strings.Split(file, "/")[:3], "/")
+	index := strings.Index(module, "@")
+	if index > 0 {
+		module = module[:index]
+	}
+	return module
+}
+
+func shouldRelinkFile(ctx context.Context, platform Platform, tool Tool, dst string) (bool, error) {
+	srcPath := filepath.Join(ToolLinksDir(ctx, platform, tool), dst)
+
+	realSrcPath, err := filepath.EvalSymlinks(srcPath)
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	versionedPath := filepath.Join(VersionDir(ctx, platform), dst)
+	realVersionedPath, err := filepath.EvalSymlinks(versionedPath)
+	if err != nil {
+		return true, nil //nolint:nilerr // this is ok
+	}
+
+	return realSrcPath != realVersionedPath, nil
 }
 
 func hasher(hashStr string) (hash.Hash, string) {
@@ -608,19 +634,4 @@ func ensureDir(file string) error {
 		return errors.WithStack(err)
 	}
 	return nil
-}
-
-func checksum(file string) (string, error) {
-	f, err := os.OpenFile(file, os.O_RDONLY, 0o600)
-	if err != nil {
-		return "", errors.WithStack(err)
-	}
-	defer f.Close()
-
-	hasher := sha256.New()
-	if _, err := io.Copy(hasher, f); err != nil {
-		return "", errors.WithStack(err)
-	}
-
-	return "sha256:" + hex.EncodeToString(hasher.Sum(nil)), nil
 }

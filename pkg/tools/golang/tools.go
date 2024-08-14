@@ -76,11 +76,15 @@ var t = []tools.Tool{
 }
 
 // EnsureGo ensures that go is available.
-func EnsureGo(ctx context.Context, deps build.DepsFunc) error {
+func EnsureGo(ctx context.Context, _ build.DepsFunc) error {
 	return tools.Ensure(ctx, Go, tools.PlatformLocal)
 }
 
 // EnsureGolangCI ensures that go linter is available.
-func EnsureGolangCI(ctx context.Context, deps build.DepsFunc) error {
+func EnsureGolangCI(ctx context.Context, _ build.DepsFunc) error {
 	return tools.Ensure(ctx, GolangCI, tools.PlatformLocal)
+}
+
+func init() {
+	tools.Add(t...)
 }
