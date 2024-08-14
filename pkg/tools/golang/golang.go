@@ -242,7 +242,3 @@ func storeLintConfig(ctx context.Context, _ build.DepsFunc) error {
 func lintConfigPath(ctx context.Context) string {
 	return filepath.Join(tools.VersionDir(ctx, tools.PlatformLocal), "golangci.yaml")
 }
-
-func init() {
-	tools.Add(t...)
-}
