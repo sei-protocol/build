@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -31,4 +32,17 @@ func CopyFile(dst, src string, perm os.FileMode) error {
 	}
 
 	return nil
+}
+
+// OnModule iterates over all the modules in the source code.
+func OnModule(fileName string, fn func(path string) error) error {
+	return filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || d.Name() != fileName {
+			return nil
+		}
+		return fn(filepath.Dir(path))
+	})
 }

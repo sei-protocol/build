@@ -16,6 +16,7 @@ import (
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 
+	"github.com/sei-protocol/build/pkg/helpers"
 	"github.com/sei-protocol/build/pkg/tools"
 )
 
@@ -48,13 +49,14 @@ func Build(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
 	return buildLocally(ctx, deps, config)
 }
 
-// Lint lints the code.
+// Lint lints the go code.
 func Lint(ctx context.Context, deps build.DepsFunc) error {
 	deps(EnsureGo, EnsureGolangCI, storeLintConfig)
+
 	log := logger.Get(ctx)
 	config := lintConfigPath(ctx)
 
-	return onModule(func(path string) error {
+	return helpers.OnModule("go.mod", func(path string) error {
 		goCodePresent, err := containsGoCode(path)
 		if err != nil {
 			return err
@@ -78,8 +80,9 @@ func Lint(ctx context.Context, deps build.DepsFunc) error {
 // Tidy runs go mod tidy in repository.
 func Tidy(ctx context.Context, deps build.DepsFunc) error {
 	deps(EnsureGo)
+
 	log := logger.Get(ctx)
-	return onModule(func(path string) error {
+	return helpers.OnModule("go.mod", func(path string) error {
 		log.Info("Running go mod tidy", zap.String("path", path))
 
 		cmd := exec.Command(tools.Bin(ctx, "bin/go", tools.PlatformLocal), "mod", "tidy")
@@ -95,6 +98,7 @@ func Tidy(ctx context.Context, deps build.DepsFunc) error {
 // UnitTests runs go unit tests in repository.
 func UnitTests(ctx context.Context, deps build.DepsFunc) error {
 	deps(EnsureGo)
+
 	log := logger.Get(ctx)
 
 	if err := os.MkdirAll(coverageReportDir, 0o700); err != nil {
@@ -102,7 +106,7 @@ func UnitTests(ctx context.Context, deps build.DepsFunc) error {
 	}
 
 	rootDir := filepath.Dir(lo.Must(filepath.Abs(lo.Must(filepath.EvalSymlinks(lo.Must(os.Getwd()))))))
-	return onModule(func(path string) error {
+	return helpers.OnModule("go.mod", func(path string) error {
 		path = lo.Must(filepath.Abs(lo.Must(filepath.EvalSymlinks(path))))
 		relPath, err := filepath.Rel(rootDir, path)
 		if err != nil {
@@ -115,11 +119,6 @@ func UnitTests(ctx context.Context, deps build.DepsFunc) error {
 		}
 		if !goCodePresent {
 			log.Info("No code to test", zap.String("path", path))
-			return nil
-		}
-
-		if filepath.Base(path) == "integration-tests" {
-			log.Info("Skipping integration-tests", zap.String("path", path))
 			return nil
 		}
 
@@ -201,18 +200,6 @@ func buildArgsAndEnvs(ctx context.Context, config BuildConfig, libDir string) (a
 	)
 
 	return args, envs
-}
-
-func onModule(fn func(path string) error) error {
-	return filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() || d.Name() != "go.mod" {
-			return nil
-		}
-		return fn(filepath.Dir(path))
-	})
 }
 
 func containsGoCode(path string) (bool, error) {

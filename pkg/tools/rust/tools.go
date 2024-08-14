@@ -79,11 +79,11 @@ func (ri RustInstaller) GetVersion() string {
 
 // IsCompatible tells if tool is defined for the platform.
 func (ri RustInstaller) IsCompatible(platform tools.Platform) (bool, error) {
-	rustupInit, err := tools.Get(RustUpInit)
+	rustUpInit, err := tools.Get(RustUpInit)
 	if err != nil {
 		return false, err
 	}
-	return rustupInit.IsCompatible(platform)
+	return rustUpInit.IsCompatible(platform)
 }
 
 // Ensure ensures that tool is installed.
@@ -97,14 +97,14 @@ func (ri RustInstaller) Ensure(ctx context.Context, platform tools.Platform) err
 
 	install := toolchain == ""
 	if !install {
-		srcDir := filepath.Join(
+		toolchainDir := filepath.Join(
 			"rustup",
 			"toolchains",
 			toolchain,
 		)
 
 		for _, binary := range binaries {
-			if tools.ShouldReinstall(ctx, platform, ri, filepath.Join(srcDir, binary), binary) {
+			if tools.ShouldReinstall(ctx, platform, ri, binary, filepath.Join(toolchainDir, binary)) {
 				install = true
 				break
 			}
@@ -122,8 +122,9 @@ func (ri RustInstaller) Ensure(ctx context.Context, platform tools.Platform) err
 
 func (ri RustInstaller) binaries() []string {
 	return []string{
-		"bin/cargo",
 		"bin/rustc",
+		"bin/cargo",
+		"bin/cargo-clippy",
 	}
 }
 
@@ -154,10 +155,7 @@ func (ri RustInstaller) install(ctx context.Context, platform tools.Platform) (r
 	)
 	cmdRustupInstaller.Env = env
 
-	cmdRustDefault := exec.Command(rustup,
-		"default",
-		ri.Version,
-	)
+	cmdRustDefault := exec.Command(rustup, "default", ri.Version)
 	cmdRustDefault.Env = env
 
 	if err := libexec.Exec(ctx, cmdRustupInstaller, cmdRustDefault); err != nil {
@@ -172,7 +170,7 @@ func (ri RustInstaller) install(ctx context.Context, platform tools.Platform) (r
 	toolchainDir := filepath.Join(toolchainsDir, toolchain)
 	linksDir := tools.ToolLinksDir(ctx, platform, ri)
 	for _, binary := range ri.binaries() {
-		binChecksum, err := tools.Checksum(filepath.Join(toolchainsDir, toolchain, binary))
+		binChecksum, err := tools.Checksum(filepath.Join(toolchainDir, binary))
 		if err != nil {
 			return err
 		}

@@ -6,6 +6,7 @@ import (
 	me "github.com/sei-protocol/build"
 	"github.com/sei-protocol/build/pkg/tools/git"
 	"github.com/sei-protocol/build/pkg/tools/golang"
+	"github.com/sei-protocol/build/pkg/tools/rust"
 )
 
 func main() {
@@ -13,6 +14,7 @@ func main() {
 		me.Commands,
 		git.Commands,
 		golang.Commands,
+		rust.Commands,
 		commands,
 	)
 	build.Main("sei")

@@ -10,6 +10,7 @@ import (
 	"github.com/outofforest/libexec"
 	"github.com/outofforest/logger"
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 
 	"github.com/sei-protocol/build/pkg/helpers"
@@ -31,13 +32,53 @@ type BuildConfig struct {
 	BinOutputPath string
 }
 
-// Build builds go binary.
+// Build builds rust binary.
 func Build(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
 	if config.Platform.OS == tools.OSDocker {
 		return errors.New("building in docker hasn't been implemented yet")
 		// return buildInDocker(ctx, config)
 	}
 	return buildLocally(ctx, deps, config)
+}
+
+// Lint lints the rust code.
+func Lint(ctx context.Context, deps build.DepsFunc) error {
+	deps(EnsureRust)
+
+	log := logger.Get(ctx)
+
+	return helpers.OnModule("Cargo.toml", func(path string) error {
+		log.Info("Running linter", zap.String("path", path))
+		cmd := exec.Command(tools.Bin(ctx, "bin/cargo", tools.PlatformLocal), "clippy",
+			"--target-dir", targetDir(ctx))
+		cmd.Env = env(ctx)
+		cmd.Dir = path
+		if err := libexec.Exec(ctx, cmd); err != nil {
+			return errors.Wrapf(err, "linter errors found in module '%s'", path)
+		}
+		return nil
+	})
+}
+
+// UnitTests runs rust unit tests in repository.
+func UnitTests(ctx context.Context, deps build.DepsFunc) error {
+	deps(EnsureRust)
+
+	log := logger.Get(ctx)
+
+	return helpers.OnModule("Cargo.toml", func(path string) error {
+		path = lo.Must(filepath.Abs(lo.Must(filepath.EvalSymlinks(path))))
+
+		log.Info("Running rust tests", zap.String("path", path))
+		cmd := exec.Command(tools.Bin(ctx, "bin/cargo", tools.PlatformLocal), "test",
+			"--target-dir", targetDir(ctx))
+		cmd.Env = env(ctx)
+		cmd.Dir = path
+		if err := libexec.Exec(ctx, cmd); err != nil {
+			return errors.Wrapf(err, "unit tests failed in module '%s'", path)
+		}
+		return nil
+	})
 }
 
 func buildLocally(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
