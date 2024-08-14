@@ -18,7 +18,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/sei-protocol/build/pkg/tools"
-	"github.com/sei-protocol/build/pkg/tools/git"
 )
 
 const coverageReportDir = "coverage"
@@ -50,34 +49,8 @@ func Build(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
 	return buildLocally(ctx, deps, config)
 }
 
-// Lint lints.
+// Lint lints the code.
 func Lint(ctx context.Context, deps build.DepsFunc) error {
-	deps(Tidy, LintCode, git.StatusClean)
-	log := logger.Get(ctx)
-	config := lintConfigPath(ctx)
-
-	return onModule(func(path string) error {
-		goCodePresent, err := containsGoCode(path)
-		if err != nil {
-			return err
-		}
-		if !goCodePresent {
-			log.Info("No code to lint", zap.String("path", path))
-			return nil
-		}
-
-		log.Info("Running linter", zap.String("path", path))
-		cmd := exec.Command(tools.Bin(ctx, "bin/golangci-lint", tools.PlatformLocal), "run", "--config", config)
-		cmd.Dir = path
-		if err := libexec.Exec(ctx, cmd); err != nil {
-			return errors.Wrapf(err, "linter errors found in module '%s'", path)
-		}
-		return nil
-	})
-}
-
-// LintCode lints the code.
-func LintCode(ctx context.Context, deps build.DepsFunc) error {
 	deps(EnsureGo, EnsureGolangCI, storeLintConfig)
 	log := logger.Get(ctx)
 	config := lintConfigPath(ctx)
