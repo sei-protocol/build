@@ -6,6 +6,7 @@ import (
 	"github.com/outofforest/build"
 
 	"github.com/sei-protocol/build/pkg/tools/golang"
+	"github.com/sei-protocol/build/pkg/tools/rust"
 )
 
 var commands = map[string]build.Command{
@@ -27,14 +28,14 @@ var commands = map[string]build.Command{
 	"lint": {
 		Description: "Lints code",
 		Fn: func(_ context.Context, deps build.DepsFunc) error {
-			deps(golang.Lint)
+			deps(golang.Lint, rust.Lint)
 			return nil
 		},
 	},
 	"test": {
 		Description: "Runs unit tests",
 		Fn: func(_ context.Context, deps build.DepsFunc) error {
-			deps(golang.UnitTests)
+			deps(golang.UnitTests, rust.UnitTests)
 			return nil
 		},
 	},
