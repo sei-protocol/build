@@ -21,4 +21,4 @@ jobs:
       with:
         persist-credentials: false
     - name: Run ${{ matrix.command }}
-      run: bin/builder tidy ${{ matrix.command }} git/isclean
+      run: bin/builder generate tidy ${{ matrix.command }} git/isclean

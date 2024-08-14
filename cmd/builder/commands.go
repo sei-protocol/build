@@ -10,6 +10,17 @@ import (
 )
 
 var commands = map[string]build.Command{
+	"generate": {
+		Description: "Generates go code",
+		Fn: func(_ context.Context, deps build.DepsFunc) error {
+			deps(generateGo)
+			return nil
+		},
+	},
+	"generate/go": {
+		Description: "Generates go code",
+		Fn:          generateGo,
+	},
 	"build": {
 		Description: "Builds all binaries",
 		Fn: func(_ context.Context, deps build.DepsFunc) error {
