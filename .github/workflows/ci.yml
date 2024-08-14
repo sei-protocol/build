@@ -11,6 +11,7 @@ jobs:
         command: [
           "lint",
           "test",
+          "build",
         ]
 
     runs-on: ubuntu-latest

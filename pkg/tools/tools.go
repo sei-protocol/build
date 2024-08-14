@@ -275,6 +275,11 @@ func ToolLinksDir(ctx context.Context, platform Platform, tool Tool) string {
 	return filepath.Join(ToolDownloadDir(ctx, platform, tool), "_links")
 }
 
+// DevDir returns directory where development files are stored.
+func DevDir(ctx context.Context) string {
+	return filepath.Join(envDir(ctx), "dev")
+}
+
 // ShouldReinstall check if tool should be reinstalled due to missing files or links.
 func ShouldReinstall(ctx context.Context, platform Platform, tool Tool, dst, src string) bool {
 	srcAbsPath, err := filepath.Abs(filepath.Join(ToolDownloadDir(ctx, platform, tool), src))
