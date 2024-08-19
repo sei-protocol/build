@@ -265,6 +265,11 @@ func Get(toolName Name) (Tool, error) {
 	return t, nil
 }
 
+// EnvDir returns the directory where local environment is stored.
+func EnvDir(ctx context.Context) string {
+	return filepath.Join(lo.Must(os.UserCacheDir()), build.GetName(ctx))
+}
+
 // ToolDownloadDir returns directory where tool is downloaded.
 func ToolDownloadDir(ctx context.Context, platform Platform, tool Tool) string {
 	return filepath.Join(downloadsDir(ctx, platform), string(tool.GetName())+"-"+tool.GetVersion())
@@ -277,7 +282,7 @@ func ToolLinksDir(ctx context.Context, platform Platform, tool Tool) string {
 
 // DevDir returns directory where development files are stored.
 func DevDir(ctx context.Context) string {
-	return filepath.Join(envDir(ctx), "dev")
+	return filepath.Join(EnvDir(ctx), "dev")
 }
 
 // ShouldReinstall check if tool should be reinstalled due to missing files or links.
@@ -384,12 +389,8 @@ func Checksum(file string) (string, error) {
 	return "sha256:" + hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-func envDir(ctx context.Context) string {
-	return filepath.Join(lo.Must(os.UserCacheDir()), build.GetName(ctx))
-}
-
 func platformDir(ctx context.Context, platform Platform) string {
-	return filepath.Join(envDir(ctx), platform.String())
+	return filepath.Join(EnvDir(ctx), platform.String())
 }
 
 func downloadsDir(ctx context.Context, platform Platform) string {

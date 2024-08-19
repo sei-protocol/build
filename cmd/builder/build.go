@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"path/filepath"
 
 	"github.com/outofforest/build"
 
@@ -14,10 +15,18 @@ import (
 func buildGo(ctx context.Context, deps build.DepsFunc) error {
 	deps(generateGo)
 
-	return golang.Build(ctx, deps, golang.BuildConfig{
+	if err := golang.Build(ctx, deps, golang.BuildConfig{
 		Platform:      tools.PlatformLocal,
 		PackagePath:   "testapps/golang",
 		BinOutputPath: "bin/test-go",
+	}); err != nil {
+		return err
+	}
+
+	return golang.Build(ctx, deps, golang.BuildConfig{
+		Platform:      tools.PlatformDocker,
+		PackagePath:   "testapps/golang",
+		BinOutputPath: filepath.Join("bin", tools.PlatformDocker.String(), "test-go"),
 	})
 }
 
