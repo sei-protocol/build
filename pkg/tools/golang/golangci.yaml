@@ -79,14 +79,6 @@ linters-settings:
     # Default: 40
     statements: 60
 
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(github.com/sei-protocol)
-
-    custom-order: true
-
   revive:
     confidence: 0.1
     rules:
