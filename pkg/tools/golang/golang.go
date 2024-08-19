@@ -3,6 +3,7 @@ package golang
 import (
 	"context"
 	_ "embed"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/sei-protocol/build/pkg/helpers"
 	"github.com/sei-protocol/build/pkg/tools"
+	"github.com/sei-protocol/build/pkg/tools/docker"
 )
 
 const coverageReportDir = "coverage"
@@ -43,8 +45,7 @@ type BuildConfig struct {
 // Build builds go binary.
 func Build(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
 	if config.Platform.OS == tools.OSDocker {
-		return errors.New("building in docker hasn't been implemented yet")
-		// return buildInDocker(ctx, config)
+		return buildInDocker(ctx, deps, config)
 	}
 	return buildLocally(ctx, deps, config)
 }
@@ -154,8 +155,7 @@ func buildLocally(ctx context.Context, deps build.DepsFunc, config BuildConfig) 
 			config.Platform, tools.PlatformLocal)
 	}
 
-	args, envs := buildArgsAndEnvs(ctx, config, filepath.Join(tools.VersionDir(ctx, config.Platform), "lib"))
-	args = append(args, "-o", lo.Must(filepath.Abs(config.BinOutputPath)), ".")
+	args, envs := buildArgsAndEnvs(ctx, config)
 
 	cmd := exec.Command(tools.Bin(ctx, "bin/go", config.Platform), args...)
 	cmd.Dir = config.PackagePath
@@ -173,19 +173,74 @@ func buildLocally(ctx context.Context, deps build.DepsFunc, config BuildConfig) 
 	return nil
 }
 
-func buildArgsAndEnvs(ctx context.Context, config BuildConfig, libDir string) (args, envs []string) {
+func buildInDocker(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
+	deps(docker.EnsureDocker)
+
+	goTool, err := tools.Get(Go)
+	if err != nil {
+		return err
+	}
+
+	image := fmt.Sprintf("golang:%s-alpine%s", goTool.GetVersion(), docker.AlpineVersion)
+
+	srcDir := lo.Must(filepath.EvalSymlinks(lo.Must(filepath.Abs("."))))
+	envDir := tools.EnvDir(ctx)
+
+	if err := os.MkdirAll(envDir, 0o755); err != nil {
+		return errors.WithStack(err)
+	}
+
+	args, envs := buildArgsAndEnvs(ctx, config)
+	if err != nil {
+		return err
+	}
+	runArgs := []string{
+		"run", "--rm",
+		"--label", docker.LabelKey + "=" + docker.LabelValue,
+		"-v", srcDir + ":" + srcDir,
+		"-v", envDir + ":" + envDir,
+		"--workdir", filepath.Join(srcDir, config.PackagePath),
+		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
+		"--name", "sei-build-golang",
+	}
+
+	for _, env := range envs {
+		runArgs = append(runArgs, "--env", env)
+	}
+
+	runArgs = append(runArgs, image, "/usr/local/go/bin/go")
+	runArgs = append(runArgs, args...)
+
+	cmd := exec.Command("docker", runArgs...)
+	logger.Get(ctx).Info(
+		"Building go package in docker",
+		zap.String("package", config.PackagePath),
+		zap.String("command", cmd.String()),
+	)
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
+	}
+	return nil
+}
+
+func buildArgsAndEnvs(ctx context.Context, config BuildConfig) (args, envs []string) {
 	ldFlags := []string{"-w", "-s"}
 
 	args = []string{
 		"build",
 		"-trimpath",
 		"-buildvcs=false",
-	}
-	if len(ldFlags) != 0 {
-		args = append(args, "-ldflags="+strings.Join(ldFlags, " "))
+		"-ldflags=" + strings.Join(ldFlags, " "),
+		"-o", lo.Must(filepath.Abs(config.BinOutputPath)),
+		".",
 	}
 	if len(config.Tags) != 0 {
 		args = append(args, "-tags="+strings.Join(config.Tags, ","))
+	}
+
+	goOS := config.Platform.OS
+	if goOS == tools.OSDocker {
+		goOS = tools.OSLinux
 	}
 
 	cgoEnabled := "0"
@@ -193,9 +248,8 @@ func buildArgsAndEnvs(ctx context.Context, config BuildConfig, libDir string) (a
 		cgoEnabled = "1"
 	}
 	envs = append(env(ctx),
-		"LIBRARY_PATH="+libDir,
 		"CGO_ENABLED="+cgoEnabled,
-		"GOOS="+config.Platform.OS,
+		"GOOS="+goOS,
 		"GOARCH="+config.Platform.Arch,
 	)
 
@@ -232,7 +286,7 @@ func lintConfigPath(ctx context.Context) string {
 
 func env(ctx context.Context) []string {
 	return []string{
-		"PATH=" + os.Getenv("PATH"),
+		"PATH=" + filepath.Join(tools.VersionDir(ctx, tools.PlatformLocal), "bin") + ":" + os.Getenv("PATH"),
 		"GOPATH=" + filepath.Join(tools.DevDir(ctx), "go"),
 		"GOCACHE=" + filepath.Join(tools.DevDir(ctx), "go", "cache", "gobuild"),
 		"GOLANGCI_LINT_CACHE=" + filepath.Join(tools.DevDir(ctx), "go", "cache", "golangci"),
