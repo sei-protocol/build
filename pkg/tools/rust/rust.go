@@ -177,7 +177,7 @@ func buildArgsAndEnvs(ctx context.Context) (args, envs []string) {
 
 func env(ctx context.Context) []string {
 	return []string{
-		"PATH=" + os.Getenv("PATH"),
+		"PATH=" + filepath.Join(tools.VersionDir(ctx, tools.PlatformLocal), "bin") + ":" + os.Getenv("PATH"),
 		"CARGO_HOME=" + filepath.Join(tools.DevDir(ctx), "rust", "cargo"),
 	}
 }
