@@ -26,7 +26,7 @@ var Commands = map[string]build.Command{
 		Fn: func(ctx context.Context, deps build.DepsFunc) error {
 			return golang.Build(ctx, deps, golang.BuildConfig{
 				Platform:      tools.PlatformLocal,
-				PackagePath:   "cmd/builder",
+				PackagePath:   "build/cmd/builder",
 				BinOutputPath: filepath.Join("bin", ".cache", filepath.Base(lo.Must(os.Executable()))),
 			})
 		},
