@@ -4,6 +4,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -45,4 +46,16 @@ func OnModule(fileName string, fn func(path string) error) error {
 		}
 		return fn(filepath.Dir(path))
 	})
+}
+
+// ToolCmd returns command executing a tool available in PATH.
+func ToolCmd(tool string, args []string) *exec.Cmd {
+	verifyTool(tool)
+	return exec.Command(tool, args...)
+}
+
+func verifyTool(tool string) {
+	if _, err := exec.LookPath(tool); err != nil {
+		panic(errors.Errorf("%s is not available, please install it", tool))
+	}
 }

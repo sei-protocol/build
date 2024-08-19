@@ -57,4 +57,12 @@ var commands = map[string]build.Command{
 			return nil
 		},
 	},
+	"localnet/start": {
+		Description: "Starts localnet",
+		Fn:          localnetStart,
+	},
+	"localnet/remove": {
+		Description: "Removes localnet",
+		Fn:          localnetRemove,
+	},
 }

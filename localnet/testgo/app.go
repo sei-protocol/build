@@ -1,0 +1,31 @@
+package testgo
+
+import (
+	"fmt"
+	"path/filepath"
+
+	"github.com/sei-protocol/build/pkg/localnet/infra"
+	"github.com/sei-protocol/build/pkg/tools"
+	"github.com/sei-protocol/build/pkg/tools/docker"
+)
+
+// Config stores go app config.
+type Config struct {
+	Name string
+}
+
+// New creates new go app.
+func New(config Config) *infra.App {
+	return &infra.App{
+		RunAsUser: true,
+		Name:      config.Name,
+		Image:     fmt.Sprintf("alpine:%s", docker.AlpineVersion),
+		Volumes: []infra.Volume{
+			{
+				Source:      filepath.Join("bin", tools.PlatformDocker.String()),
+				Destination: "/usr/local/localnet/bin",
+			},
+		},
+		Entrypoint: "/usr/local/localnet/bin/test-go",
+	}
+}
