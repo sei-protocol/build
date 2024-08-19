@@ -2,9 +2,11 @@ package rust
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/outofforest/build"
 	"github.com/outofforest/libexec"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/sei-protocol/build/pkg/helpers"
 	"github.com/sei-protocol/build/pkg/tools"
+	"github.com/sei-protocol/build/pkg/tools/docker"
 )
 
 // BuildConfig is the configuration for building binaries.
@@ -35,8 +38,7 @@ type BuildConfig struct {
 // Build builds rust binary.
 func Build(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
 	if config.Platform.OS == tools.OSDocker {
-		return errors.New("building in docker hasn't been implemented yet")
-		// return buildInDocker(ctx, config)
+		return buildInDocker(ctx, deps, config)
 	}
 	return buildLocally(ctx, deps, config)
 }
@@ -104,6 +106,60 @@ func buildLocally(ctx context.Context, deps build.DepsFunc, config BuildConfig) 
 	)
 	if err := libexec.Exec(ctx, cmd); err != nil {
 		return errors.Wrapf(err, "building rust package '%s' failed", config.PackagePath)
+	}
+
+	return helpers.CopyFile(config.BinOutputPath, filepath.Join(targetDir(ctx), "release", config.Binary), 0o755)
+}
+
+func buildInDocker(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
+	deps(docker.EnsureDocker)
+
+	rustTool, err := tools.Get(Rust)
+	if err != nil {
+		return err
+	}
+
+	image := fmt.Sprintf("rust:%s-alpine%s", rustTool.GetVersion(), docker.AlpineVersion)
+
+	srcDir := lo.Must(filepath.EvalSymlinks(lo.Must(filepath.Abs("."))))
+	envDir := tools.EnvDir(ctx)
+
+	if err := os.MkdirAll(envDir, 0o755); err != nil {
+		return errors.WithStack(err)
+	}
+
+	args, envs := buildArgsAndEnvs(ctx)
+	if err != nil {
+		return err
+	}
+	runArgs := []string{
+		"run", "--rm",
+		"--label", docker.LabelKey + "=" + docker.LabelValue,
+		"-v", srcDir + ":" + srcDir,
+		"-v", envDir + ":" + envDir,
+		"--workdir", filepath.Join(srcDir, config.PackagePath),
+		"--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()),
+		"--name", "sei-build-rust",
+	}
+
+	for _, env := range envs {
+		if strings.HasPrefix(env, "PATH=") {
+			env = strings.Replace(env, "=", "=/usr/local/cargo/bin:", 1)
+		}
+		runArgs = append(runArgs, "--env", env)
+	}
+
+	runArgs = append(runArgs, image, "cargo")
+	runArgs = append(runArgs, args...)
+
+	cmd := exec.Command("docker", runArgs...)
+	logger.Get(ctx).Info(
+		"Building rust package in docker",
+		zap.String("package", config.PackagePath),
+		zap.String("command", cmd.String()),
+	)
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return errors.Wrapf(err, "building package '%s' failed", config.PackagePath)
 	}
 
 	return helpers.CopyFile(config.BinOutputPath, filepath.Join(targetDir(ctx), "release", config.Binary), 0o755)

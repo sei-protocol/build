@@ -56,7 +56,7 @@ var t = []tools.Tool{
 
 	// https://releases.rs
 	RustInstaller{
-		Version: "1.74.0",
+		Version: "1.80.1",
 	},
 }
 

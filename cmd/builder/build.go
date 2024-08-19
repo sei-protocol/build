@@ -31,11 +31,20 @@ func buildGo(ctx context.Context, deps build.DepsFunc) error {
 }
 
 func buildRust(ctx context.Context, deps build.DepsFunc) error {
-	return rust.Build(ctx, deps, rust.BuildConfig{
+	if err := rust.Build(ctx, deps, rust.BuildConfig{
 		Platform:      tools.PlatformLocal,
 		PackagePath:   "testapps/rust",
 		Binary:        "rust",
 		BinOutputPath: "bin/test-rust",
+	}); err != nil {
+		return err
+	}
+
+	return rust.Build(ctx, deps, rust.BuildConfig{
+		Platform:      tools.PlatformDocker,
+		PackagePath:   "testapps/rust",
+		Binary:        "rust",
+		BinOutputPath: filepath.Join("bin", tools.PlatformDocker.String(), "test-rust"),
 	})
 }
 
