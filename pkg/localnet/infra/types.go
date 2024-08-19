@@ -253,6 +253,11 @@ func (app *App) Deploy(ctx context.Context, target *Docker) error {
 	return app.postprocess(ctx)
 }
 
+// Info returns deployment info.
+func (app *App) Info() DeploymentInfo {
+	return app.info
+}
+
 func (app *App) preprocess(ctx context.Context) error {
 	if len(app.Requires.Dependencies) > 0 {
 		waitCtx, waitCancel := context.WithTimeout(ctx, app.Requires.Timeout)
