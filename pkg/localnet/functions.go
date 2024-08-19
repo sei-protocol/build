@@ -2,6 +2,10 @@ package localnet
 
 import (
 	"context"
+	"os"
+	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/sei-protocol/build/pkg/localnet/infra"
 )
@@ -26,5 +30,22 @@ func Stop(ctx context.Context, appSet infra.AppSet) error {
 
 // Remove removes environment.
 func Remove(ctx context.Context) error {
-	return infra.NewDocker().Remove(ctx)
+	if err := infra.NewDocker().Remove(ctx); err != nil {
+		return err
+	}
+
+	// It may happen that some files are flushed to disk even after processes are terminated
+	// so let's try to delete dir a few times
+	var err error
+	for i := 0; i < 3; i++ {
+		if err = os.RemoveAll(rootDir(ctx)); err == nil || errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
+	return errors.WithStack(err)
 }
