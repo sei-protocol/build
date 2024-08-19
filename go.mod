@@ -9,7 +9,7 @@ require (
 	github.com/outofforest/parallel v0.2.3
 	github.com/outofforest/run v0.6.0
 	github.com/pkg/errors v0.9.1
-	github.com/samber/lo v1.46.0
+	github.com/samber/lo v1.47.0
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
