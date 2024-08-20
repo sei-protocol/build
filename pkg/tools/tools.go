@@ -48,6 +48,7 @@ const (
 
 // Platform definitions.
 var (
+	PlatformEmpty       = Platform{}
 	PlatformLocal       = Platform{OS: runtime.GOOS, Arch: runtime.GOARCH}
 	PlatformLinuxAMD64  = Platform{OS: OSLinux, Arch: ArchAMD64}
 	PlatformDarwinAMD64 = Platform{OS: OSDarwin, Arch: ArchAMD64}
@@ -247,7 +248,7 @@ func Ensure(ctx context.Context, toolName Name, platform Platform) error {
 
 // VersionDir returns path to the version directory.
 func VersionDir(ctx context.Context, platform Platform) string {
-	return filepath.Join(platformDir(ctx, platform), envVersion())
+	return filepath.Join(PlatformDir(ctx, platform), EnvVersion())
 }
 
 // Bin returns path to the installed binary.
@@ -268,6 +269,11 @@ func Get(toolName Name) (Tool, error) {
 // EnvDir returns the directory where local environment is stored.
 func EnvDir(ctx context.Context) string {
 	return filepath.Join(lo.Must(os.UserCacheDir()), build.GetName(ctx))
+}
+
+// PlatformDir returns the directory where platform-specific stuff is stored.
+func PlatformDir(ctx context.Context, platform Platform) string {
+	return filepath.Join(EnvDir(ctx), platform.String())
 }
 
 // ToolDownloadDir returns directory where tool is downloaded.
@@ -389,15 +395,8 @@ func Checksum(file string) (string, error) {
 	return "sha256:" + hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
-func platformDir(ctx context.Context, platform Platform) string {
-	return filepath.Join(EnvDir(ctx), platform.String())
-}
-
-func downloadsDir(ctx context.Context, platform Platform) string {
-	return filepath.Join(platformDir(ctx, platform), "downloads")
-}
-
-func envVersion() string {
+// EnvVersion returns the version of the environment.
+func EnvVersion() string {
 	module := module()
 
 	bi, ok := debug.ReadBuildInfo()
@@ -421,6 +420,10 @@ func envVersion() string {
 	}
 
 	panic("impossible condition: build module not found")
+}
+
+func downloadsDir(ctx context.Context, platform Platform) string {
+	return filepath.Join(PlatformDir(ctx, platform), "downloads")
 }
 
 func module() string {

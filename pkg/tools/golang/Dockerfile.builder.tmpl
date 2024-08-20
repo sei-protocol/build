@@ -1,0 +1,3 @@
+FROM --platform=linux/{{ .Arch }} golang:{{ .GOVersion }}-alpine{{ .AlpineVersion }}
+
+RUN apk add --no-cache gcc libc-dev linux-headers
