@@ -106,10 +106,10 @@ func UnitTests(ctx context.Context, deps build.DepsFunc) error {
 
 	log := logger.Get(ctx)
 
-	if err := os.MkdirAll(coverageReportDir, 0o700); err != nil {
+	covDir := lo.Must(filepath.Abs(coverageReportDir))
+	if err := os.MkdirAll(covDir, 0o700); err != nil {
 		return errors.WithStack(err)
 	}
-
 	rootDir := filepath.Dir(lo.Must(filepath.Abs(lo.Must(filepath.EvalSymlinks(lo.Must(os.Getwd()))))))
 	return helpers.OnModule("go.mod", func(path string) error {
 		path = lo.Must(filepath.Abs(lo.Must(filepath.EvalSymlinks(path))))
@@ -128,7 +128,7 @@ func UnitTests(ctx context.Context, deps build.DepsFunc) error {
 		}
 
 		coverageName := strings.ReplaceAll(relPath, "/", "-")
-		coverageProfile := filepath.Join(coverageReportDir, coverageName)
+		coverageProfile := filepath.Join(covDir, coverageName)
 
 		log.Info("Running go tests", zap.String("path", path))
 		cmd := exec.Command(
