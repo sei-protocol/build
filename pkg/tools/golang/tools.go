@@ -17,8 +17,9 @@ import (
 
 // Tool names.
 const (
-	Go       tools.Name = "go"
-	GolangCI tools.Name = "golangci"
+	Go        tools.Name = "go"
+	GolangCI  tools.Name = "golangci"
+	LibEVMOne tools.Name = "libevmone"
 )
 
 var t = []tools.Tool{
@@ -78,6 +79,21 @@ var t = []tools.Tool{
 				Hash: "sha256:234463f059249f82045824afdcdd5db5682d0593052f58f6a3039a0a1c3899f6",
 				Links: map[string]string{
 					"bin/golangci-lint": "golangci-lint-1.55.2-darwin-arm64/golangci-lint",
+				},
+			},
+		},
+	},
+
+	// https://github.com/ethereum/evmone/releases
+	tools.BinaryTool{
+		Name:    LibEVMOne,
+		Version: "0.12.0",
+		Sources: tools.Sources{
+			tools.PlatformDockerAMD64: {
+				URL:  "https://github.com/ethereum/evmone/releases/download/v0.12.0/evmone-0.12.0-linux-x86_64.tar.gz",
+				Hash: "sha256:1c7b5eba0c8c3b3b2a7a05101e2d01a13a2f84b323989a29be66285dba4136ce",
+				Links: map[string]string{
+					"lib/libevmone.so": "lib/libevmone.so",
 				},
 			},
 		},
@@ -181,6 +197,11 @@ func EnsureGo(ctx context.Context, _ build.DepsFunc) error {
 // EnsureGolangCI ensures that go linter is available.
 func EnsureGolangCI(ctx context.Context, _ build.DepsFunc) error {
 	return tools.Ensure(ctx, GolangCI, tools.PlatformLocal)
+}
+
+// EnsureLibEVMOne ensures that libevmone is available.
+func EnsureLibEVMOne(ctx context.Context, _ build.DepsFunc) error {
+	return tools.Ensure(ctx, LibEVMOne, tools.PlatformDockerAMD64)
 }
 
 func init() {

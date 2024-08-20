@@ -21,6 +21,7 @@ import (
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 
+	"github.com/sei-protocol/build/pkg/tools"
 	"github.com/sei-protocol/build/pkg/tools/docker"
 )
 
@@ -174,6 +175,9 @@ func (d *Docker) DeployContainer(ctx context.Context, app *App) (DeploymentInfo,
 func (d *Docker) prepareRunArgs(app *App) []string {
 	runArgs := []string{
 		"run", "--name", app.Name, "-d", "--label", labelEnv + "=" + envName, "--network", networkName,
+	}
+	if app.Platform != tools.PlatformEmpty {
+		runArgs = append(runArgs, "--platform", fmt.Sprintf("linux/%s", app.Platform.Arch))
 	}
 	if app.RunAsUser {
 		runArgs = append(runArgs, "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()))

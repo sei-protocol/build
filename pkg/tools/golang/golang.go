@@ -1,14 +1,18 @@
 package golang
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
 	_ "embed"
+	"encoding/hex"
 	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/outofforest/build"
 	"github.com/outofforest/libexec"
@@ -147,6 +151,67 @@ func UnitTests(ctx context.Context, deps build.DepsFunc) error {
 	})
 }
 
+//go:embed Dockerfile.builder.tmpl
+var dockerfileBuilderTemplate string
+
+var dockerfileBuilderTemplateParsed = template.Must(template.New("").Parse(dockerfileBuilderTemplate))
+
+// DockerBuilderImage creates the image used to build go binaries and returns it name.
+func DockerBuilderImage(ctx context.Context, deps build.DepsFunc, platform tools.Platform) (string, error) {
+	if platform.OS != tools.OSDocker {
+		return "", errors.Errorf("docker platform must be specified, %s provided", platform)
+	}
+
+	deps(docker.EnsureDocker)
+
+	const imageName = "docker-go-builder"
+
+	goTool, err := tools.Get(Go)
+	if err != nil {
+		return "", err
+	}
+	dockerfileBuf := &bytes.Buffer{}
+	err = dockerfileBuilderTemplateParsed.Execute(dockerfileBuf, struct {
+		Arch          string
+		GOVersion     string
+		AlpineVersion string
+	}{
+		Arch:          platform.Arch,
+		GOVersion:     goTool.GetVersion(),
+		AlpineVersion: docker.AlpineVersion,
+	})
+	if err != nil {
+		return "", errors.Wrap(err, "executing Dockerfile template failed")
+	}
+
+	dockerfileChecksum := sha256.Sum256(dockerfileBuf.Bytes())
+	image := imageName + ":" + hex.EncodeToString(dockerfileChecksum[:4])
+
+	imageBuf := &bytes.Buffer{}
+	imageCmd := exec.Command("docker", "images", "-q", image)
+	imageCmd.Stdout = imageBuf
+	if err := libexec.Exec(ctx, imageCmd); err != nil {
+		return "", errors.Wrapf(err, "failed to list image '%s'", image)
+	}
+	if imageBuf.Len() > 0 {
+		return image, nil
+	}
+
+	buildCmd := exec.Command(
+		"docker",
+		"build",
+		"--label", docker.LabelKey+"="+docker.LabelValue,
+		"--tag", image,
+		"-",
+	)
+	buildCmd.Stdin = dockerfileBuf
+
+	if err := libexec.Exec(ctx, buildCmd); err != nil {
+		return "", errors.Wrapf(err, "failed to build image '%s'", image)
+	}
+	return image, nil
+}
+
 func buildLocally(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
 	deps(EnsureGo)
 
@@ -176,12 +241,10 @@ func buildLocally(ctx context.Context, deps build.DepsFunc, config BuildConfig) 
 func buildInDocker(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
 	deps(docker.EnsureDocker)
 
-	goTool, err := tools.Get(Go)
+	image, err := DockerBuilderImage(ctx, deps, config.Platform)
 	if err != nil {
 		return err
 	}
-
-	image := fmt.Sprintf("golang:%s-alpine%s", goTool.GetVersion(), docker.AlpineVersion)
 
 	srcDir := lo.Must(filepath.EvalSymlinks(lo.Must(filepath.Abs("."))))
 	envDir := tools.EnvDir(ctx)

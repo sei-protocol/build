@@ -15,6 +15,7 @@ import (
 	"github.com/samber/lo"
 	"go.uber.org/zap"
 
+	"github.com/sei-protocol/build/pkg/tools"
 	"github.com/sei-protocol/build/pkg/tools/docker"
 )
 
@@ -220,6 +221,9 @@ type App struct {
 
 	// Image is the url of the container image
 	Image string
+
+	// Platform is the platform used to download the image for
+	Platform tools.Platform
 
 	// EnvVarsFunc is a function defining environment variables for docker container
 	EnvVarsFunc func() []EnvVar
