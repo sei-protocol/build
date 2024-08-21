@@ -4,24 +4,49 @@ import (
 	"context"
 	"path/filepath"
 
+	"github.com/samber/lo"
+
 	"github.com/sei-protocol/build/pkg/localnet/infra"
 	"github.com/sei-protocol/build/pkg/tools"
 )
 
-// DockerAppDir is in-docker directory for application-specific data.
-const DockerAppDir = "/app"
+const (
+	dockerBinDir      = "/usr/local/localnet/bin"
+	dockerAppDir      = "/app"
+	dockerLocalnetDir = "/usr/local/localnet/"
+)
 
-// AppDir returns on-host directory for application-specific data.
-func AppDir(ctx context.Context, appName string) string {
-	return filepath.Join(rootDir(ctx), appName)
+// BinDirMount returns mount info for repo bin directory.
+func BinDirMount(platform tools.Platform) (volume infra.Volume, hostDir, dockerDir string) {
+	hostDir = lo.Must(filepath.EvalSymlinks(lo.Must(filepath.Abs(filepath.Join("bin", platform.String())))))
+	return infra.Volume{
+		Source:      hostDir,
+		Destination: dockerBinDir,
+	}, hostDir, dockerBinDir
 }
 
-// AppDirVolume returns the volume to be mounted inside docker for application-specific data.
-func AppDirVolume(ctx context.Context, appName string) infra.Volume {
+// AppDirMount returns mount info for application data directory.
+func AppDirMount(ctx context.Context, appName string) (volume infra.Volume, hostDir, dockerDir string) {
+	hostDir = appDir(ctx, appName)
 	return infra.Volume{
-		Source:      AppDir(ctx, appName),
-		Destination: DockerAppDir,
-	}
+		Source:      hostDir,
+		Destination: dockerAppDir,
+	}, hostDir, dockerAppDir
+}
+
+// PlatformDirMount returns mount info for application data directory.
+func PlatformDirMount(ctx context.Context, platform tools.Platform) (volume infra.Volume, hostDir, dockerDir string) {
+	hostPlatformDir := tools.PlatformDir(ctx, platform)
+	dockerPlatformDir := filepath.Join(dockerLocalnetDir, platform.String())
+	envVersion := tools.EnvVersion()
+	return infra.Volume{
+		Source:      hostPlatformDir,
+		Destination: dockerPlatformDir,
+	}, filepath.Join(hostPlatformDir, envVersion), filepath.Join(dockerPlatformDir, envVersion)
+}
+
+func appDir(ctx context.Context, appName string) string {
+	return filepath.Join(rootDir(ctx), appName)
 }
 
 func rootDir(ctx context.Context) string {
