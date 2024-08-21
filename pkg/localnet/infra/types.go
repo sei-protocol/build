@@ -189,6 +189,12 @@ type Volume struct {
 	Destination string
 }
 
+// PortName represents the name of the port.
+type PortName string
+
+// Ports is the map of exposed ports.
+type Ports map[PortName]int
+
 // App represents application to be deployed.
 type App struct {
 	// Name of the application
@@ -198,7 +204,7 @@ type App struct {
 	ArgsFunc func() []string
 
 	// Ports are the network ports exposed by the application
-	Ports map[string]int
+	Ports Ports
 
 	// Requires is the list of health checks to be required before app can be deployed
 	Requires Prerequisites
