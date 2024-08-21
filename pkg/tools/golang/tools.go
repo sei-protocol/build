@@ -126,6 +126,11 @@ func (gpt GoPackageTool) IsCompatible(platform tools.Platform) (bool, error) {
 	return golang.IsCompatible(platform)
 }
 
+// Verify verifies the cheksums.
+func (gpt GoPackageTool) Verify(ctx context.Context) ([]error, error) {
+	return nil, nil
+}
+
 // Ensure ensures that tool is installed.
 func (gpt GoPackageTool) Ensure(ctx context.Context, platform tools.Platform) error {
 	binName := filepath.Base(gpt.Package)

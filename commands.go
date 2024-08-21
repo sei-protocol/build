@@ -31,9 +31,13 @@ var Commands = map[string]build.Command{
 			})
 		},
 	},
-	"setup": {
+	"tools/setup": {
 		Description: "Installs all the tools for the host operating system",
 		Fn:          tools.EnsureAll,
+	},
+	"tools/verify": {
+		Description: "Verifies the checksums of all the tools",
+		Fn:          tools.VerifyChecksums,
 	},
 }
 

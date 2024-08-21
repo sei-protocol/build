@@ -85,6 +85,11 @@ func (ri RustInstaller) IsCompatible(platform tools.Platform) (bool, error) {
 	return rustUpInit.IsCompatible(platform)
 }
 
+// Verify verifies the cheksums.
+func (ri RustInstaller) Verify(ctx context.Context) ([]error, error) {
+	return nil, nil
+}
+
 // Ensure ensures that tool is installed.
 func (ri RustInstaller) Ensure(ctx context.Context, platform tools.Platform) error {
 	binaries := ri.binaries()

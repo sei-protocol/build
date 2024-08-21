@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	goerrors "errors"
 	"hash"
 	"io"
 	"net/http"
@@ -63,6 +64,7 @@ type Tool interface {
 	GetName() Name
 	GetVersion() string
 	IsCompatible(platform Platform) (bool, error)
+	Verify(ctx context.Context) ([]error, error)
 	Ensure(ctx context.Context, platform Platform) error
 }
 
@@ -106,6 +108,30 @@ func (bt BinaryTool) GetVersion() string {
 func (bt BinaryTool) IsCompatible(platform Platform) (bool, error) {
 	_, exists := bt.Sources[platform]
 	return exists, nil
+}
+
+// Verify verifies the cheksums.
+func (bt BinaryTool) Verify(ctx context.Context) ([]error, error) {
+	errs := []error{}
+	for platform, source := range bt.Sources {
+		resp, err := http.DefaultClient.Do(lo.Must(http.NewRequestWithContext(ctx, http.MethodGet, source.URL, nil)))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		defer resp.Body.Close()
+
+		hasher, expectedChecksum := hasher(source.Hash)
+		_, err = io.Copy(hasher, resp.Body)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		actualChecksum := hex.EncodeToString(hasher.Sum(nil))
+		if actualChecksum != expectedChecksum {
+			errs = append(errs, errors.Errorf("checksum does not match for tool %s and platform %s, expected: %s,"+
+				"actual: %s, url: %s", bt.Name, platform, expectedChecksum, actualChecksum, source.URL))
+		}
+	}
+	return errs, nil
 }
 
 // Ensure ensures the tool is installed.
@@ -244,6 +270,19 @@ func Ensure(ctx context.Context, toolName Name, platform Platform) error {
 		return err
 	}
 	return tool.Ensure(ctx, platform)
+}
+
+// VerifyChecksums of all the tools.
+func VerifyChecksums(ctx context.Context, _ build.DepsFunc) error {
+	allErrs := []error{}
+	for _, tool := range toolsMap {
+		errs, err := tool.Verify(ctx)
+		if err != nil {
+			return err
+		}
+		allErrs = append(allErrs, errs...)
+	}
+	return goerrors.Join(allErrs...)
 }
 
 // VersionDir returns path to the version directory.
