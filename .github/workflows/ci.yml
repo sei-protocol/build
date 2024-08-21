@@ -12,6 +12,7 @@ jobs:
           "lint",
           "test",
           "build",
+          "tools/verify",
         ]
 
     runs-on: ubuntu-latest
