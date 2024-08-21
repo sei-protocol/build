@@ -288,6 +288,9 @@ func buildInDocker(ctx context.Context, deps build.DepsFunc, config BuildConfig)
 
 func buildArgsAndEnvs(ctx context.Context, config BuildConfig) (args, envs []string) {
 	ldFlags := []string{"-w", "-s"}
+	if config.Platform.OS == tools.OSDocker {
+		ldFlags = append(ldFlags, "-extldflags=-static")
+	}
 
 	args = []string{
 		"build",
