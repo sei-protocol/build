@@ -6,7 +6,6 @@ import (
 	"github.com/sei-protocol/build/pkg/localnet"
 	"github.com/sei-protocol/build/pkg/localnet/infra"
 	"github.com/sei-protocol/build/pkg/tools"
-	"github.com/sei-protocol/build/pkg/tools/docker"
 )
 
 // Config stores rust app config.
@@ -21,7 +20,6 @@ func New(config Config) *infra.App {
 	return &infra.App{
 		RunAsUser: true,
 		Name:      config.Name,
-		Image:     "alpine:" + docker.AlpineVersion,
 		Volumes: []infra.Volume{
 			binVolume,
 		},

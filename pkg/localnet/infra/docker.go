@@ -196,7 +196,12 @@ func (d *Docker) prepareRunArgs(app *App) []string {
 		runArgs = append(runArgs, "--entrypoint", app.Entrypoint)
 	}
 
-	runArgs = append(runArgs, app.Image)
+	image := app.Image
+	if image == "" {
+		image = AlpineImage()
+	}
+
+	runArgs = append(runArgs, image)
 	if app.ArgsFunc != nil {
 		runArgs = append(runArgs, app.ArgsFunc()...)
 	}

@@ -13,7 +13,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/sei-protocol/build/pkg/retry"
+	"github.com/sei-protocol/build/pkg/tools/docker"
 )
+
+// AlpineImage returns the default docker image used to run containers.
+func AlpineImage() string {
+	return "alpine:" + docker.AlpineVersion
+}
 
 // WaitUntilHealthy waits until app is healthy or context expires.
 func WaitUntilHealthy(ctx context.Context, hFuncs map[string]func(ctx context.Context) error) error {
