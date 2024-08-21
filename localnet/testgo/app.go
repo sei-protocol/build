@@ -3,6 +3,7 @@ package testgo
 import (
 	"path/filepath"
 
+	"github.com/sei-protocol/build/pkg/localnet"
 	"github.com/sei-protocol/build/pkg/localnet/infra"
 	"github.com/sei-protocol/build/pkg/tools"
 	"github.com/sei-protocol/build/pkg/tools/docker"
@@ -15,16 +16,15 @@ type Config struct {
 
 // New creates new go app.
 func New(config Config) *infra.App {
+	binVolume, _, dockerBinDir := localnet.BinDirMount(tools.PlatformDocker)
+
 	return &infra.App{
 		RunAsUser: true,
 		Name:      config.Name,
 		Image:     "alpine:" + docker.AlpineVersion,
 		Volumes: []infra.Volume{
-			{
-				Source:      filepath.Join("bin", tools.PlatformDocker.String()),
-				Destination: "/usr/local/localnet/bin",
-			},
+			binVolume,
 		},
-		Entrypoint: "/usr/local/localnet/bin/test-go",
+		Entrypoint: filepath.Join(dockerBinDir, "test-go"),
 	}
 }
