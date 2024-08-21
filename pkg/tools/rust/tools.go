@@ -2,7 +2,6 @@ package rust
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -144,8 +143,8 @@ func (ri RustInstaller) install(ctx context.Context, platform tools.Platform) (r
 	rustup := filepath.Join(cargoHome, "bin", "rustup")
 	env := append(
 		os.Environ(),
-		fmt.Sprintf("RUSTUP_HOME=%s", rustupHome),
-		fmt.Sprintf("CARGO_HOME=%s", cargoHome),
+		"RUSTUP_HOME="+rustupHome,
+		"CARGO_HOME="+cargoHome,
 	)
 
 	cmdRustupInstaller := exec.Command(rustupInstaller,

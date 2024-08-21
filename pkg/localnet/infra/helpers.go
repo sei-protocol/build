@@ -19,8 +19,7 @@ import (
 func WaitUntilHealthy(ctx context.Context, hFuncs map[string]func(ctx context.Context) error) error {
 	log := logger.Get(ctx)
 	for name, hFunc := range hFuncs {
-		hFunc := hFunc
-		ctx = logger.With(ctx, zap.String("app", name))
+		ctx := logger.With(ctx, zap.String("app", name))
 		log.Info("Waiting for app to start.")
 		if err := retry.Do(ctx, time.Second, func() error {
 			return hFunc(ctx)

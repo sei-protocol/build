@@ -1,6 +1,6 @@
 module github.com/sei-protocol/build
 
-go 1.21
+go 1.22
 
 require (
 	github.com/outofforest/build v1.16.4

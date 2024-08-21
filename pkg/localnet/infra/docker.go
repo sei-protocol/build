@@ -177,7 +177,7 @@ func (d *Docker) prepareRunArgs(app *App) []string {
 		"run", "--name", app.Name, "-d", "--label", labelEnv + "=" + envName, "--network", networkName,
 	}
 	if app.Platform != tools.PlatformEmpty {
-		runArgs = append(runArgs, "--platform", fmt.Sprintf("linux/%s", app.Platform.Arch))
+		runArgs = append(runArgs, "--platform", "linux/"+app.Platform.Arch)
 	}
 	if app.RunAsUser {
 		runArgs = append(runArgs, "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()))
@@ -313,7 +313,6 @@ func forContainer(ctx context.Context, fn func(ctx context.Context, info contain
 
 	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		for _, cInfo := range info {
-			cInfo := cInfo
 			spawn("container."+cInfo.ID, parallel.Continue, func(ctx context.Context) error {
 				return fn(ctx, container{
 					ID:      cInfo.ID,

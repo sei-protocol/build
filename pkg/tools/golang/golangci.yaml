@@ -31,12 +31,11 @@ linters:
     - cyclop
     - errchkjson
     - exhaustive
-    - exhaustivestruct
     - exhaustruct
     - forbidigo
     - forcetypeassert
     - gochecknoglobals
-    - goerr113
+    - err113
     - gofumpt
     - gomnd
     - gomoddirectives
@@ -48,7 +47,6 @@ linters:
     - maintidx
     - nlreturn
     - nonamedreturns
-    - nosnakecase
     - paralleltest
     - prealloc
     - testpackage
@@ -59,10 +57,9 @@ linters:
     - depguard
     - musttag
     - dogsled
-    # deprecated:
-    - golint
-    - interfacer
-    - maligned
+    - mnd
+    - exportloopref
+    - execinquery
 
 linters-settings:
   nakedret:

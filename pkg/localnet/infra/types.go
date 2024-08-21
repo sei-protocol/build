@@ -3,7 +3,6 @@ package infra
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"runtime"
 	"strings"
 	"time"
@@ -25,17 +24,17 @@ type AppSet []*App
 // Deploy deploys app in environment to the target.
 func (as AppSet) Deploy(ctx context.Context, t *Docker) error {
 	log := logger.Get(ctx)
-	log.Info(fmt.Sprintf("Staring AppSet deployment, apps: %s", strings.Join(lo.Map(as, func(app *App, _ int) string {
+	log.Info("Staring AppSet deployment, apps: " + strings.Join(lo.Map(as, func(app *App, _ int) string {
 		return app.Name
-	}), ",")))
+	}), ","))
 
 	return parallel.Run(ctx, func(ctx context.Context, spawn parallel.SpawnFn) error {
 		deploymentSlots := make(chan struct{}, runtime.NumCPU())
-		for i := 0; i < cap(deploymentSlots); i++ {
+		for range cap(deploymentSlots) {
 			deploymentSlots <- struct{}{}
 		}
 		imagePullSlots := make(chan struct{}, 3)
-		for i := 0; i < cap(imagePullSlots); i++ {
+		for range cap(imagePullSlots) {
 			imagePullSlots <- struct{}{}
 		}
 
@@ -67,7 +66,6 @@ func (as AppSet) Deploy(ctx context.Context, t *Docker) error {
 				continue
 			}
 
-			toDeploy := toDeploy
 			spawn("deploy."+name, parallel.Continue, func(ctx context.Context) error {
 				log.Info("Deployment initialized")
 
