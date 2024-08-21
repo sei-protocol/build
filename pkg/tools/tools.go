@@ -49,7 +49,6 @@ const (
 
 // Platform definitions.
 var (
-	PlatformEmpty       = Platform{}
 	PlatformLocal       = Platform{OS: runtime.GOOS, Arch: runtime.GOARCH}
 	PlatformLinuxAMD64  = Platform{OS: OSLinux, Arch: ArchAMD64}
 	PlatformDarwinAMD64 = Platform{OS: OSDarwin, Arch: ArchAMD64}
