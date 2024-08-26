@@ -60,6 +60,7 @@ linters:
     - mnd
     - exportloopref
     - execinquery
+    - protogetter
 
 linters-settings:
   nakedret:
