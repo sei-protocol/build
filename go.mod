@@ -3,7 +3,7 @@ module github.com/sei-protocol/build
 go 1.22
 
 require (
-	github.com/outofforest/build v1.16.4
+	github.com/outofforest/build v1.16.5
 	github.com/outofforest/libexec v0.3.9
 	github.com/outofforest/logger v0.5.4
 	github.com/outofforest/parallel v0.2.3
