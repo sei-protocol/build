@@ -20,7 +20,6 @@ const (
 	Go        tools.Name = "go"
 	GolangCI  tools.Name = "golangci"
 	LibEVMOne tools.Name = "libevmone"
-	Foundry   tools.Name = "foundry"
 )
 
 var t = []tools.Tool{
@@ -95,41 +94,6 @@ var t = []tools.Tool{
 				Hash: "sha256:1c7b5eba0c8c3b3b2a7a05101e2d01a13a2f84b323989a29be66285dba4136ce",
 				Links: map[string]string{
 					"lib/libevmone.so": "lib/libevmone.so",
-				},
-			},
-		},
-	},
-
-	// https://github.com/foundry-rs/foundry/releases/tag/nightly-2b1f8d6dd90f9790faf0528e05e60e573a7569ce
-	tools.BinaryTool{
-		Name:    Foundry,
-		Version: "nightly-2b1f8d6dd90f9790faf0528e05e60e573a7569ce",
-		Sources: tools.Sources{
-			tools.PlatformLinuxAMD64: {
-				URL:  "https://github.com/foundry-rs/foundry/releases/download/nightly/foundry_nightly_linux_amd64.tar.gz",
-				Hash: "sha256:2c75c62fab2a521938fd2a5eec6e97f9718eb0b6802852f54f1d886100fe8eb0",
-				Links: map[string]string{
-					"bin/anvil":   "foundry",
-					"bin/foundry": "anvil",
-					"bin/cast":    "cast",
-				},
-			},
-			tools.PlatformDarwinAMD64: {
-				URL:  "https://github.com/foundry-rs/foundry/releases/download/nightly/foundry_nightly_darwin_amd64.tar.gz",
-				Hash: "sha256:cf853e416cf9358174bf4fcf603b5c263aed456842b9c78661c4d77654133b7a",
-				Links: map[string]string{
-					"bin/anvil":   "foundry",
-					"bin/foundry": "anvil",
-					"bin/cast":    "cast",
-				},
-			},
-			tools.PlatformDarwinAMD64: {
-				URL:  "https://github.com/foundry-rs/foundry/releases/download/nightly/foundry_nightly_darwin_arm64.tar.gz",
-				Hash: "sha256:af157f6daac33bb4b955875e777c52d7d022e6471ed2bf1cddba9869ed5707f0",
-				Links: map[string]string{
-					"bin/anvil":   "foundry",
-					"bin/foundry": "anvil",
-					"bin/cast":    "cast",
 				},
 			},
 		},
