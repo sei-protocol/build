@@ -114,6 +114,24 @@ var t = []tools.Tool{
 					"bin/cast":    "cast",
 				},
 			},
+			tools.PlatformDarwinAMD64: {
+				URL:  "https://github.com/foundry-rs/foundry/releases/download/nightly/foundry_nightly_darwin_amd64.tar.gz",
+				Hash: "sha256:cf853e416cf9358174bf4fcf603b5c263aed456842b9c78661c4d77654133b7a",
+				Links: map[string]string{
+					"bin/anvil":   "foundry",
+					"bin/foundry": "anvil",
+					"bin/cast":    "cast",
+				},
+			},
+			tools.PlatformDarwinAMD64: {
+				URL:  "https://github.com/foundry-rs/foundry/releases/download/nightly/foundry_nightly_darwin_arm64.tar.gz",
+				Hash: "sha256:af157f6daac33bb4b955875e777c52d7d022e6471ed2bf1cddba9869ed5707f0",
+				Links: map[string]string{
+					"bin/anvil":   "foundry",
+					"bin/foundry": "anvil",
+					"bin/cast":    "cast",
+				},
+			},
 		},
 	},
 }
