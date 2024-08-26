@@ -154,6 +154,46 @@ func UnitTests(ctx context.Context, deps build.DepsFunc) error {
 	})
 }
 
+// Benchmark runs go benchmark tests in repository.
+func Benchmark(ctx context.Context, deps build.DepsFunc) error {
+	deps(EnsureGo)
+
+	log := logger.Get(ctx)
+
+	covDir := lo.Must(filepath.Abs(coverageReportDir))
+	if err := os.MkdirAll(covDir, 0o700); err != nil {
+		return errors.WithStack(err)
+	}
+	return helpers.OnModule("go.mod", func(path string) error {
+		path = lo.Must(filepath.Abs(lo.Must(filepath.EvalSymlinks(path))))
+
+		goCodePresent, err := containsGoCode(path)
+		if err != nil {
+			return err
+		}
+		if !goCodePresent {
+			log.Info("No code to test", zap.String("path", path))
+			return nil
+		}
+
+		log.Info("Running go benchmark", zap.String("path", path))
+		cmd := exec.Command(
+			tools.Bin(ctx, "bin/go", tools.PlatformLocal),
+			"test",
+			"-benchmem",
+			"-bench", "TODO",
+			"-count=1",
+			"./...",
+		)
+		cmd.Env = env(ctx)
+		cmd.Dir = path
+		if err := libexec.Exec(ctx, cmd); err != nil {
+			return errors.Wrapf(err, "benchmarks failed in module '%s'", path)
+		}
+		return nil
+	})
+}
+
 //go:embed Dockerfile.builder.tmpl
 var dockerfileBuilderTemplate string
 
