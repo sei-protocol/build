@@ -181,7 +181,8 @@ func Benchmark(ctx context.Context, deps build.DepsFunc) error {
 			tools.Bin(ctx, "bin/go", tools.PlatformLocal),
 			"test",
 			"-benchmem",
-			"-bench", "TODO",
+			"-v",
+			"-bench", ".",
 			"-count=1",
 			"./...",
 		)
