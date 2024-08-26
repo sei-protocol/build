@@ -100,10 +100,10 @@ var t = []tools.Tool{
 		},
 	},
 
-	// https://go.dev/dl/
+	// https://github.com/foundry-rs/foundry/releases/tag/nightly-2b1f8d6dd90f9790faf0528e05e60e573a7569ce
 	tools.BinaryTool{
 		Name:    Foundry,
-		Version: "2b1f8d6dd90f9790faf0528e05e60e573a7569ce",
+		Version: "nightly-2b1f8d6dd90f9790faf0528e05e60e573a7569ce",
 		Sources: tools.Sources{
 			tools.PlatformLinuxAMD64: {
 				URL:  "https://github.com/foundry-rs/foundry/releases/download/nightly/foundry_nightly_linux_amd64.tar.gz",
