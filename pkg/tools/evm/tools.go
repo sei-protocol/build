@@ -1,6 +1,8 @@
 package evm
 
 import (
+	"context"
+	"github.com/outofforest/build"
 	"github.com/sei-protocol/build/pkg/tools"
 )
 
@@ -44,6 +46,11 @@ var t = []tools.Tool{
 			},
 		},
 	},
+}
+
+// EnsureFoundry ensures that foundry is available.
+func EnsureFoundry(ctx context.Context, _ build.DepsFunc) error {
+	return tools.Ensure(ctx, Foundry, tools.PlatformLocal)
 }
 
 func init() {
