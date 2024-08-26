@@ -7,8 +7,8 @@ github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeN
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
-github.com/outofforest/build v1.16.4 h1:lwMDwTp/J9ER7sqYsp9Yw3RaSUv/8pnl2pjFp2iPvJM=
-github.com/outofforest/build v1.16.4/go.mod h1:Re43hgVnJ51VCEIDSt9pn/+bFjYOsvfMpk0L+rN/g0s=
+github.com/outofforest/build v1.16.5 h1:YE9g3gLSqj+i4NeeTQdtrG+eaxoaaFoMb4n8uKMeH6Q=
+github.com/outofforest/build v1.16.5/go.mod h1:wh3E6oojlTkaaqVJx56L13erYOk641KnVu5gnCgxmfc=
 github.com/outofforest/ioc/v2 v2.5.2 h1:4mNzLuzoZTXL/cO0qf1TrSYvejMgbZz5OUhdLzAUbek=
 github.com/outofforest/ioc/v2 v2.5.2/go.mod h1:yI+FHuHchC/t6nVo3WJ96qEgCXdHQKFI/4wW2/75YcU=
 github.com/outofforest/libexec v0.3.9 h1:KvVLuKDHqpydwNoKm+j36hi9DVPU61X4oHonlZ5cw88=
