@@ -180,6 +180,7 @@ func Benchmark(ctx context.Context, deps build.DepsFunc) error {
 		cmd := exec.Command(
 			tools.Bin(ctx, "bin/go", tools.PlatformLocal),
 			"test",
+			"-run", "^$",
 			"-benchmem",
 			"-v",
 			"-bench", ".",
