@@ -16,7 +16,7 @@ var t = []tools.Tool{
 		Version: "nightly-2b1f8d6dd90f9790faf0528e05e60e573a7569ce",
 		Sources: tools.Sources{
 			tools.PlatformLinuxAMD64: {
-				URL:  "https://github.com/foundry-rs/foundry/releases/download/nightly-2b1f8d6dd90f9790faf0528e05e60e573a7569ce/foundry_nightly_linux_amd64.tar.gz",
+				URL:  "https://github.com/foundry-rs/foundry/releases/download/nightly-2b1f8d6dd90f9790faf0528e05e60e573a7569ce/foundry_nightly_linux_amd64.tar.gz", //nolint:lll
 				Hash: "sha256:2c75c62fab2a521938fd2a5eec6e97f9718eb0b6802852f54f1d886100fe8eb0",
 				Links: map[string]string{
 					"bin/anvil":   "foundry",
@@ -25,7 +25,7 @@ var t = []tools.Tool{
 				},
 			},
 			tools.PlatformDarwinAMD64: {
-				URL:  "https://github.com/foundry-rs/foundry/releases/download/nightly-2b1f8d6dd90f9790faf0528e05e60e573a7569ce/foundry_nightly_darwin_amd64.tar.gz",
+				URL:  "https://github.com/foundry-rs/foundry/releases/download/nightly-2b1f8d6dd90f9790faf0528e05e60e573a7569ce/foundry_nightly_darwin_amd64.tar.gz", //nolint:lll
 				Hash: "sha256:cf853e416cf9358174bf4fcf603b5c263aed456842b9c78661c4d77654133b7a",
 				Links: map[string]string{
 					"bin/anvil":   "foundry",
@@ -34,7 +34,7 @@ var t = []tools.Tool{
 				},
 			},
 			tools.PlatformDarwinARM64: {
-				URL:  "https://github.com/foundry-rs/foundry/releases/download/nightly-2b1f8d6dd90f9790faf0528e05e60e573a7569ce/foundry_nightly_darwin_arm64.tar.gz",
+				URL:  "https://github.com/foundry-rs/foundry/releases/download/nightly-2b1f8d6dd90f9790faf0528e05e60e573a7569ce/foundry_nightly_darwin_arm64.tar.gz", //nolint:lll
 				Hash: "sha256:af157f6daac33bb4b955875e777c52d7d022e6471ed2bf1cddba9869ed5707f0",
 				Links: map[string]string{
 					"bin/anvil":   "foundry",
