@@ -61,7 +61,7 @@ var t = []tools.Tool{
 		Version: "1.60.2",
 		Sources: tools.Sources{
 			tools.PlatformLinuxAMD64: {
-				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.60.2/golangci-lint-1.60.2-linux-amd64.tar.gz",
+				URL:  "https://github.com/golangci/golangci-lint/releases/download/v1.60.2/golangci-lint-1.60.2-linux-amd64.tar.gz", //nolint:lll
 				Hash: "sha256:607be92de8519aa88de0688e62b02ef87899386e9dfed320a04422bbe352d124",
 				Links: map[string]string{
 					"bin/golangci-lint": "golangci-lint-1.60.2-linux-amd64/golangci-lint",
