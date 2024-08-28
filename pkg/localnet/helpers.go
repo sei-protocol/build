@@ -2,6 +2,7 @@ package localnet
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 
 	"github.com/samber/lo"
@@ -28,6 +29,8 @@ func BinDirMount(platform tools.Platform) (volume infra.Volume, hostDir, dockerD
 // AppDirMount returns mount info for application data directory.
 func AppDirMount(ctx context.Context, appName string) (volume infra.Volume, hostDir, dockerDir string) {
 	hostDir = appDir(ctx, appName)
+	lo.Must0(os.MkdirAll(hostDir, 0o700))
+
 	return infra.Volume{
 		Source:      hostDir,
 		Destination: dockerAppDir,
