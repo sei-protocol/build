@@ -10,6 +10,9 @@ issues:
   max-same-issues: 0
   # disable some excludes that golangci-lint has by default. see https://github.com/golangci/golangci-lint
   exclude-use-default: false
+  exclude-files:
+    - '.+\.pb\.go'      # exclude all protocol buffer generated files
+    - '.+\.proton\.go'  # exclude all proton generated files
   # many golangci linters enforce stupid rules, so we will add more to the list soon
   exclude-rules:
     - linters:
