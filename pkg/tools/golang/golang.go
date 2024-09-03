@@ -47,6 +47,9 @@ type BuildConfig struct {
 
 	// Tags is go build tags.
 	Tags []string
+
+	// LdFlags are additional flags to pass to the go linker.
+	LdFlags []string
 }
 
 // Build builds go binary.
@@ -336,8 +339,10 @@ func buildArgsAndEnvs(ctx context.Context, config BuildConfig) (args, envs []str
 	if config.StaticBuild && config.Platform.OS == tools.OSDocker {
 		ldFlags = append(ldFlags, "-extldflags=-static")
 	}
-	commitHash := getCommitHash()
-	ldFlags = append(ldFlags, "-X github.com/sei-protocol/sei-stream/pkg/version.Commit="+commitHash)
+
+	if len(config.LdFlags) != 0 {
+		ldFlags = append(ldFlags, config.LdFlags...)
+	}
 
 	args = []string{
 		"build",
@@ -404,13 +409,4 @@ func env(ctx context.Context) []string {
 		"GOCACHE=" + filepath.Join(tools.DevDir(ctx), "go", "cache", "gobuild"),
 		"GOLANGCI_LINT_CACHE=" + filepath.Join(tools.DevDir(ctx), "go", "cache", "golangci"),
 	}
-}
-
-func getCommitHash() string {
-	cmd := exec.Command("git", "rev-parse", "HEAD")
-	output, err := cmd.Output()
-	if err != nil {
-		return "failed to get commit hash"
-	}
-	return strings.TrimSpace(string(output))
 }
