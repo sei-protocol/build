@@ -337,7 +337,7 @@ func buildArgsAndEnvs(ctx context.Context, config BuildConfig) (args, envs []str
 		ldFlags = append(ldFlags, "-extldflags=-static")
 	}
 	commitHash := getCommitHash()
-	ldFlags = append(ldFlags, "-X github.com/sei-protocol/sei-stream/pkg/version/version.Commit="+commitHash)
+	ldFlags = append(ldFlags, "-X github.com/sei-protocol/sei-stream/pkg/version.Commit="+commitHash)
 
 	args = []string{
 		"build",
