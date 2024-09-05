@@ -49,7 +49,12 @@ type BuildConfig struct {
 	Tags []string
 
 	// LdFlags are additional flags to pass to the go linker.
-	LdFlags []string
+	LdFlags []BuildFlag
+}
+
+type BuildFlag struct {
+	Name  string
+	Value string
 }
 
 // Build builds go binary.
@@ -336,12 +341,11 @@ func buildInDocker(ctx context.Context, deps build.DepsFunc, config BuildConfig)
 
 func buildArgsAndEnvs(ctx context.Context, config BuildConfig) (args, envs []string) {
 	ldFlags := []string{"-w", "-s"}
+	for _, flag := range config.LdFlags {
+		ldFlags = append(ldFlags, fmt.Sprintf("-X %s=%s", flag.Name, flag.Value))
+	}
 	if config.StaticBuild && config.Platform.OS == tools.OSDocker {
 		ldFlags = append(ldFlags, "-extldflags=-static")
-	}
-
-	if len(config.LdFlags) != 0 {
-		ldFlags = append(ldFlags, config.LdFlags...)
 	}
 
 	args = []string{
