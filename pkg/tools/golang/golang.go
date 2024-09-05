@@ -52,8 +52,12 @@ type BuildConfig struct {
 	LdFlags []BuildFlag
 }
 
+// BuildFlag is a flag to pass to the go linker.
 type BuildFlag struct {
-	Name  string
+	// Name is the name of the flag.
+	Name string
+
+	// Value is the value of the flag.
 	Value string
 }
 
