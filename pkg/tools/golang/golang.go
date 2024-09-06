@@ -52,7 +52,7 @@ type BuildConfig struct {
 	VariablesToSet []VariableToSet
 }
 
-// VariableToSet is a build flag passed as "-X name=value to the go linker.
+// VariableToSet is a build flag passed as -X name=value to the go linker.
 type VariableToSet struct {
 	// Name is the name of the flag.
 	Name string
