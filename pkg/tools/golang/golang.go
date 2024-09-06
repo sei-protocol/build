@@ -47,6 +47,18 @@ type BuildConfig struct {
 
 	// Tags is go build tags.
 	Tags []string
+
+	// VariablesToSet are additional build flags passed as -X variables to the go linker.
+	VariablesToSet []VariableToSet
+}
+
+// VariableToSet is a build flag passed as -X name=value to the go linker.
+type VariableToSet struct {
+	// Name is the name of the flag.
+	Name string
+
+	// Value is the value of the flag.
+	Value string
 }
 
 // Build builds go binary.
@@ -333,6 +345,9 @@ func buildInDocker(ctx context.Context, deps build.DepsFunc, config BuildConfig)
 
 func buildArgsAndEnvs(ctx context.Context, config BuildConfig) (args, envs []string) {
 	ldFlags := []string{"-w", "-s"}
+	for _, flag := range config.VariablesToSet {
+		ldFlags = append(ldFlags, fmt.Sprintf("-X %s=%s", flag.Name, flag.Value))
+	}
 	if config.StaticBuild && config.Platform.OS == tools.OSDocker {
 		ldFlags = append(ldFlags, "-extldflags=-static")
 	}
