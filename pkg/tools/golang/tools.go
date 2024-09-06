@@ -100,7 +100,7 @@ var t = []tools.Tool{
 				URL:  "https://github.com/ethereum/evmone/releases/download/v0.12.0/evmone-0.12.0-darwin-arm64.tar.gz",
 				Hash: "sha256:e164e0d2b985cc1cca07b501538b2e804bf872d1d8d531f9241d518a886234a6",
 				Links: map[string]string{
-					"lib/libevmone.dylib": "lib/libevmone.dylib",
+					"lib/libevmone.dylib": "lib/libevmone.so",
 				},
 			},
 		},
