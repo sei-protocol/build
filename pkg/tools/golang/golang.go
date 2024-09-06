@@ -49,11 +49,11 @@ type BuildConfig struct {
 	Tags []string
 
 	// VariablesToSet are additional build flags passed as -X variables to the go linker.
-	VariablesToSet []BuildFlag
+	VariablesToSet []VariableToSet
 }
 
-// BuildFlag is a build flag passed to the go linker.
-type BuildFlag struct {
+// VariableToSet is a build flag passed as "-X name=value to the go linker.
+type VariableToSet struct {
 	// Name is the name of the flag.
 	Name string
 
