@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/outofforest/build"
 	"github.com/outofforest/libexec"
@@ -24,4 +25,15 @@ func IsStatusClean(ctx context.Context, _ build.DepsFunc) error {
 		return errors.New("repository contains uncommitted changes")
 	}
 	return nil
+}
+
+// CommitHash returns the hash of the active commit.
+func CommitHash(ctx context.Context) (string, error) {
+	buf := &bytes.Buffer{}
+	cmd := exec.Command("git", "rev-parse", "--short", "HEAD")
+	cmd.Stdout = buf
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return "", errors.Wrap(err, "git command failed")
+	}
+	return strings.TrimSpace(buf.String()), nil
 }
