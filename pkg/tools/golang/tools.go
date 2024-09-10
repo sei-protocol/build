@@ -213,7 +213,7 @@ func EnsureGolangCI(ctx context.Context, _ build.DepsFunc) error {
 
 // EnsureLibEVMOne ensures that libevmone is available.
 func EnsureLibEVMOne(ctx context.Context, _ build.DepsFunc) error {
-	return tools.Ensure(ctx, LibEVMOne, tools.PlatformDockerARM64)
+	return tools.Ensure(ctx, LibEVMOne, tools.PlatformLinuxAMD64)
 }
 
 func init() {
