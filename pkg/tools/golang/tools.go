@@ -96,6 +96,13 @@ var t = []tools.Tool{
 					"lib/libevmone.so": "lib/libevmone.so",
 				},
 			},
+			tools.PlatformDockerARM64: {
+				URL:  "https://github.com/ethereum/evmone/releases/download/v0.12.0/evmone-0.12.0-linux-x86_64.tar.gz",
+				Hash: "sha256:1c7b5eba0c8c3b3b2a7a05101e2d01a13a2f84b323989a29be66285dba4136ce",
+				Links: map[string]string{
+					"lib/libevmone.so": "lib/libevmone.so",
+				},
+			},
 		},
 	},
 }
@@ -206,7 +213,8 @@ func EnsureGolangCI(ctx context.Context, _ build.DepsFunc) error {
 
 // EnsureLibEVMOne ensures that libevmone is available.
 func EnsureLibEVMOne(ctx context.Context, _ build.DepsFunc) error {
-	return tools.Ensure(ctx, LibEVMOne, tools.PlatformDockerAMD64)
+	platform := tools.GetDockerPlatform()
+	return tools.Ensure(ctx, LibEVMOne, platform)
 }
 
 func init() {
