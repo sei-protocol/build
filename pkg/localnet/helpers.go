@@ -5,9 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/outofforest/logger"
 	"github.com/samber/lo"
-	"go.uber.org/zap"
 
 	"github.com/sei-protocol/build/pkg/localnet/infra"
 	"github.com/sei-protocol/build/pkg/tools"
@@ -44,8 +42,6 @@ func PlatformDirMount(ctx context.Context, platform tools.Platform) (volume infr
 	hostPlatformDir := tools.PlatformDir(ctx, platform)
 	dockerPlatformDir := filepath.Join(dockerLocalnetDir, platform.String())
 	envVersion := tools.EnvVersion()
-	log := logger.Get(ctx)
-	log.Info("PlatformDirMount", zap.String("hostPlatformDir", hostPlatformDir), zap.String("dockerPlatformDir", dockerPlatformDir), zap.String("envVersion", envVersion))
 	return infra.Volume{
 		Source:      hostPlatformDir,
 		Destination: dockerPlatformDir,
