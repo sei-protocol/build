@@ -214,11 +214,7 @@ var dockerfileBuilderTemplate string
 var dockerfileBuilderTemplateParsed = template.Must(template.New("").Parse(dockerfileBuilderTemplate))
 
 // DockerBuilderImage creates the image used to build go binaries and returns it name.
-func DockerBuilderImage(ctx context.Context, deps build.DepsFunc, platform tools.Platform) (string, error) {
-	if platform.OS != tools.OSDocker {
-		return "", errors.Errorf("docker platform must be specified, %s provided", platform)
-	}
-
+func DockerBuilderImage(ctx context.Context, deps build.DepsFunc) (string, error) {
 	deps(docker.EnsureDocker)
 
 	const imageName = "docker-go-builder"
@@ -229,11 +225,9 @@ func DockerBuilderImage(ctx context.Context, deps build.DepsFunc, platform tools
 	}
 	dockerfileBuf := &bytes.Buffer{}
 	err = dockerfileBuilderTemplateParsed.Execute(dockerfileBuf, struct {
-		Arch          string
 		GOVersion     string
 		AlpineVersion string
 	}{
-		Arch:          platform.Arch,
 		GOVersion:     goTool.GetVersion(),
 		AlpineVersion: docker.AlpineVersion,
 	})
@@ -298,7 +292,7 @@ func buildLocally(ctx context.Context, deps build.DepsFunc, config BuildConfig) 
 func buildInDocker(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
 	deps(docker.EnsureDocker)
 
-	image, err := DockerBuilderImage(ctx, deps, config.Platform)
+	image, err := DockerBuilderImage(ctx, deps)
 	if err != nil {
 		return err
 	}
