@@ -58,6 +58,7 @@ var (
 	PlatformDockerARM64 = Platform{OS: OSDocker, Arch: ArchARM64}
 )
 
+// GetDockerPlatform returns the platform for the docker build
 func GetDockerPlatform() Platform {
 	switch runtime.GOARCH {
 	case ArchARM64:
