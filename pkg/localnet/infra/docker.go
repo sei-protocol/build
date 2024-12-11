@@ -9,7 +9,6 @@ import (
 	"os"
 	osexec "os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -179,8 +178,7 @@ func (d *Docker) prepareRunArgs(app *App) []string {
 		runArgs = append(runArgs, "--user", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()))
 	}
 	for _, port := range app.Ports {
-		portStr := strconv.Itoa(port)
-		runArgs = append(runArgs, "-p", "127.0.0.1:"+portStr+":"+portStr+"/tcp")
+		runArgs = append(runArgs, "-p", fmt.Sprintf("127.0.0.1:%d:%d/tcp", port.HostPort, port.ContainerPort))
 	}
 	for _, v := range app.Volumes {
 		runArgs = append(runArgs, "-v", lo.Must(filepath.EvalSymlinks(lo.Must(filepath.Abs(v.Source))))+":"+

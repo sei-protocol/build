@@ -50,12 +50,12 @@ func PlatformDirMount(ctx context.Context, platform tools.Platform) (volume infr
 
 // FromHostAddress returns address of the app service seen from the host.
 func FromHostAddress(proto string, app *infra.App, port infra.PortName) string {
-	return infra.JoinNetAddr(proto, app.Info().HostFromHost, app.Ports[port])
+	return infra.JoinNetAddr(proto, app.Info().HostFromHost, app.Ports[port].HostPort)
 }
 
 // FromContainerAddress returns address of the app service seen from the container.
 func FromContainerAddress(proto string, app *infra.App, port infra.PortName) string {
-	return infra.JoinNetAddr(proto, app.Info().HostFromContainer, app.Ports[port])
+	return infra.JoinNetAddr(proto, app.Info().HostFromContainer, app.Ports[port].ContainerPort)
 }
 
 func appDir(ctx context.Context, appName string) string {
