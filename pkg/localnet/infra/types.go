@@ -192,6 +192,7 @@ type Volume struct {
 // PortName represents the name of the port.
 type PortName string
 
+// DockerPort is the port mapping from host to container.
 type DockerPort struct {
 	HostPort      int
 	ContainerPort int
