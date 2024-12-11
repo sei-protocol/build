@@ -192,8 +192,13 @@ type Volume struct {
 // PortName represents the name of the port.
 type PortName string
 
+type DockerPort struct {
+	HostPort      int
+	ContainerPort int
+}
+
 // Ports is the map of exposed ports.
-type Ports map[PortName]int
+type Ports map[PortName]DockerPort
 
 // App represents application to be deployed.
 type App struct {
