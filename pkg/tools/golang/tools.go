@@ -54,6 +54,36 @@ var t = []tools.Tool{
 			},
 		},
 	},
+	tools.BinaryTool{
+		Name:    Go,
+		Version: "1.23.4",
+		Sources: tools.Sources{
+			tools.PlatformLinuxAMD64: {
+				URL:  "https://go.dev/dl/go1.23.4.linux-amd64.tar.gz",
+				Hash: "sha256:6924efde5de86fe277676e929dc9917d466efa02fb934197bc2eba35d5680971",
+				Links: map[string]string{
+					"bin/go":    "go/bin/go",
+					"bin/gofmt": "go/bin/gofmt",
+				},
+			},
+			tools.PlatformDarwinAMD64: {
+				URL:  "https://go.dev/dl/go1.23.4.darwin-amd64.tar.gz",
+				Hash: "sha256:6700067389a53a1607d30aa8d6e01d198230397029faa0b109e89bc871ab5a0e",
+				Links: map[string]string{
+					"bin/go":    "go/bin/go",
+					"bin/gofmt": "go/bin/gofmt",
+				},
+			},
+			tools.PlatformDarwinARM64: {
+				URL:  "https://go.dev/dl/go1.23.4.darwin-arm64.tar.gz",
+				Hash: "sha256:87d2bb0ad4fe24d2a0685a55df321e0efe4296419a9b3de03369dbe60b8acd3a",
+				Links: map[string]string{
+					"bin/go":    "go/bin/go",
+					"bin/gofmt": "go/bin/gofmt",
+				},
+			},
+		},
+	},
 
 	// https://github.com/golangci/golangci-lint/releases/
 	tools.BinaryTool{

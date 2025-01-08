@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	goerrors "errors"
+	"fmt"
 	"hash"
 	"io"
 	"net/http"
@@ -467,7 +468,7 @@ func EnvVersion() string {
 		return m.Version
 	}
 
-	panic("impossible condition: build module not found")
+	panic(fmt.Sprintf("impossible condition: build module not found: %s", module))
 }
 
 func downloadsDir(ctx context.Context, platform Platform) string {
@@ -477,6 +478,7 @@ func downloadsDir(ctx context.Context, platform Platform) string {
 func module() string {
 	_, file, _, _ := runtime.Caller(0)
 	module := strings.Join(strings.Split(file, "/")[:3], "/")
+	fmt.Println(file, module)
 	index := strings.Index(module, "@")
 	if index > 0 {
 		module = module[:index]
