@@ -50,6 +50,7 @@ linters:
     - maintidx
     - nlreturn
     - nonamedreturns
+    - nolintlint
     - paralleltest
     - prealloc
     - testpackage
@@ -97,10 +98,12 @@ linters-settings:
       - name: dot-imports
       - name: error-naming
       - name: error-return
-      - name: error-strings
-        arguments:
-          - "sdkerrors.Wrap"
-          - "sdkerrors.Wrapf"
+      # error-strings disallows any string starting with capital letter.
+      # In particular it disallows starting error messages with names of public functions, which is annoying.
+      #- name: error-strings
+      #  arguments:
+      #    - "sdkerrors.Wrap"
+      #    - "sdkerrors.Wrapf"
       - name: errorf
       - name: exported
       - name: if-return
