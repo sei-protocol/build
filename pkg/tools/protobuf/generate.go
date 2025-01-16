@@ -11,10 +11,10 @@ import (
 	"github.com/outofforest/build"
 	"github.com/outofforest/libexec"
 	"github.com/pkg/errors"
-
-	"github.com/sei-protocol/build/pkg/tools"
 	"google.golang.org/protobuf/proto"
 	dpb "google.golang.org/protobuf/types/descriptorpb"
+
+	"github.com/sei-protocol/build/pkg/tools"
 )
 
 // GenerateGo generates go code from protobufs.
