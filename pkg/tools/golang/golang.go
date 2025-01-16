@@ -77,7 +77,14 @@ func Fmt(ctx context.Context, deps build.DepsFunc) error {
 	config := lintConfigPath(ctx)
 	return helpers.OnModule("go.mod", func(path string) error {
 		log.Info("Running golangci-lint run --fix", zap.String("path", path))
-		cmd := exec.Command(tools.Bin(ctx, "bin/golangci-lint", tools.PlatformLocal), "run", "--enable-only=gci", "--fix", "--config", config)
+		cmd := exec.Command(
+			tools.Bin(ctx, "bin/golangci-lint", tools.PlatformLocal),
+			"run",
+			"--enable-only=gci",
+			"--fix",
+			"--config",
+			config,
+		)
 		cmd.Env = env(ctx)
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
