@@ -14,6 +14,8 @@ import (
 	"github.com/sei-protocol/build/pkg/tools"
 )
 
+const DescriptorFile = "gen.binpb"
+
 // GenerateGo generates go code from protobufs.
 func GenerateGo(ctx context.Context, deps build.DepsFunc, protoDir, outDir string) error {
 	deps(EnsureProtoc, EnsureProtocGenGo)
@@ -32,6 +34,9 @@ func GenerateGo(ctx context.Context, deps build.DepsFunc, protoDir, outDir strin
 			"--proto_path", protoDir,
 			"--plugin", tools.Bin(ctx, "bin/protoc-gen-go", tools.PlatformLocal),
 			"--go_out", outDir,
+			"--include_imports",
+			"--retain_options",
+			"--descriptor_set_out", filepath.Join(outDir, DescriptorFile),
 		}, protoFiles...)...)
 
 	return libexec.Exec(ctx, cmd)
