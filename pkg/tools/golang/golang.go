@@ -71,7 +71,7 @@ func Build(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
 
 // Fmt formats golang code using golangci-lint in all modules.
 func Fmt(ctx context.Context, deps build.DepsFunc) error {
-	deps(EnsureGo)
+	deps(EnsureGo, EnsureGolangCI, storeLintConfig)
 
 	log := logger.Get(ctx)
 	config := lintConfigPath(ctx)
