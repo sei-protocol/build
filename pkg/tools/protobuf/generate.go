@@ -2,6 +2,7 @@ package protobuf
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,23 +13,24 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/sei-protocol/build/pkg/tools"
+	"google.golang.org/protobuf/proto"
+	dpb "google.golang.org/protobuf/types/descriptorpb"
 )
 
-const DescriptorFile = "gen.binpb"
-
 // GenerateGo generates go code from protobufs.
-func GenerateGo(ctx context.Context, deps build.DepsFunc, protoDir, outDir string) error {
+func GenerateGo(ctx context.Context, deps build.DepsFunc, protoDir, outDir string) (*dpb.FileDescriptorSet, error) {
 	deps(EnsureProtoc, EnsureProtocGenGo)
 
 	protoFiles, err := findProtoFiles(protoDir)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("findProtoFiles(%q): %w", protoDir, err)
 	}
 
 	if err := os.MkdirAll(outDir, 0o700); err != nil {
-		return errors.WithStack(err)
+		return nil, fmt.Errorf("os.MkDirAll(%q): %w", outDir, err)
 	}
 
+	descPath := filepath.Join(outDir, "gen.binpb")
 	cmd := exec.Command(tools.Bin(ctx, "bin/protoc", tools.PlatformLocal),
 		append([]string{
 			"--proto_path", protoDir,
@@ -36,10 +38,20 @@ func GenerateGo(ctx context.Context, deps build.DepsFunc, protoDir, outDir strin
 			"--go_out", outDir,
 			"--include_imports",
 			"--retain_options",
-			"--descriptor_set_out", filepath.Join(outDir, DescriptorFile),
+			"--descriptor_set_out", descPath,
 		}, protoFiles...)...)
-
-	return libexec.Exec(ctx, cmd)
+	if err := libexec.Exec(ctx, cmd); err != nil {
+		return nil, err
+	}
+	descBytes, err := os.ReadFile(descPath)
+	if err != nil {
+		return nil, fmt.Errorf("os.ReadFile(%q): %w", descPath, err)
+	}
+	desc := &dpb.FileDescriptorSet{}
+	if err := proto.Unmarshal(descBytes, desc); err != nil {
+		return nil, fmt.Errorf("proto.Unmarshal(%q): %w", descPath, err)
+	}
+	return desc, nil
 }
 
 // GenerateGoGRPC generates go GRPC service from protobufs.

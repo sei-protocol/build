@@ -4,4 +4,5 @@
 
 bin
 coverage
+testapps/golang/generated
 Cargo.lock

@@ -53,7 +53,7 @@ func generateGo(ctx context.Context, deps build.DepsFunc) error {
 		protoDir = "testapps/golang/proto"
 		outDir   = "testapps/golang/generated"
 	)
-	if err := protobuf.GenerateGo(ctx, deps, protoDir, outDir); err != nil {
+	if _, err := protobuf.GenerateGo(ctx, deps, protoDir, outDir); err != nil {
 		return err
 	}
 
