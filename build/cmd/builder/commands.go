@@ -43,6 +43,10 @@ var commands = map[string]build.Command{
 			return nil
 		},
 	},
+	"fmt": {
+		Description: "Formats golang code",
+		Fn:          golang.Fmt,
+	},
 	"test": {
 		Description: "Runs unit tests",
 		Fn: func(_ context.Context, deps build.DepsFunc) error {

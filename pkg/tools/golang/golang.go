@@ -72,18 +72,18 @@ func Build(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
 // Formats golang code using gofmt in all modules.
 func Fmt(ctx context.Context, deps build.DepsFunc) error {
 	deps(EnsureGo)
-	
-  log := logger.Get(ctx)
 
-  return helpers.OnModule("go.mod", func(path string) error {
+	log := logger.Get(ctx)
+
+	return helpers.OnModule("go.mod", func(path string) error {
 		log.Info("Running gofmt", zap.String("path", path))
-    cmd := exec.Command(tools.Bin(ctx, "bin/go", tools.PlatformLocal), "fmt", "./...")
-    cmd.Env = env(ctx) 
-    cmd.Dir = path
+		cmd := exec.Command(tools.Bin(ctx, "bin/go", tools.PlatformLocal), "fmt", "./...")
+		cmd.Env = env(ctx)
+		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "failed to run 'go fmt' in module '%s'", path)
 		}
-    return nil
+		return nil
 	})
 }
 
