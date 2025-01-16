@@ -69,7 +69,7 @@ func Build(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
 	return buildLocally(ctx, deps, config)
 }
 
-// Formats golang code using gofmt in all modules.
+// Fmt formats golang code using gofmt in all modules.
 func Fmt(ctx context.Context, deps build.DepsFunc) error {
 	deps(EnsureGo)
 
