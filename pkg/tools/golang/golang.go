@@ -69,7 +69,7 @@ func Build(ctx context.Context, deps build.DepsFunc, config BuildConfig) error {
 	return buildLocally(ctx, deps, config)
 }
 
-// Fmt formats golang code using gofmt in all modules.
+// Fmt formats golang code using golangci-lint in all modules.
 func Fmt(ctx context.Context, deps build.DepsFunc) error {
 	deps(EnsureGo)
 
@@ -77,19 +77,11 @@ func Fmt(ctx context.Context, deps build.DepsFunc) error {
 	config := lintConfigPath(ctx)
 	return helpers.OnModule("go.mod", func(path string) error {
 		log.Info("Running golangci-lint run --fix", zap.String("path", path))
-		cmd := exec.Command(tools.Bin(ctx, "bin/golangci-lint", tools.PlatformLocal), "run", "--fix", "--config", config)
+		cmd := exec.Command(tools.Bin(ctx, "bin/golangci-lint", tools.PlatformLocal), "run", "--enable-only=gci", "--fix", "--config", config)
 		cmd.Env = env(ctx)
 		cmd.Dir = path
 		if err := libexec.Exec(ctx, cmd); err != nil {
 			return errors.Wrapf(err, "linter errors found in module '%s'", path)
-		}
-
-		log.Info("Running gofmt", zap.String("path", path))
-		cmd = exec.Command(tools.Bin(ctx, "bin/go", tools.PlatformLocal), "fmt", "./...")
-		cmd.Env = env(ctx)
-		cmd.Dir = path
-		if err := libexec.Exec(ctx, cmd); err != nil {
-			return errors.Wrapf(err, "failed to run 'go fmt' in module '%s'", path)
 		}
 		return nil
 	})
